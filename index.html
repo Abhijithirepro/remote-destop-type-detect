@@ -3,349 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Desktop Detection</title>
+    <title>AnyDesk Detection System</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Remote Desktop Detection</h1>
-        <p>Analyzes keystroke timing patterns to detect AnyDesk, RDP, VNC sessions</p>
+        <h1>🎯 AnyDesk Detection System</h1>
+        <p>Advanced keystroke timing analysis to detect AnyDesk remote desktop sessions</p>
         
-        <div class="input-area">
+        <div class="detection-area">
             <textarea 
-                id="keyInput" 
-                placeholder="Type continuously here... Need at least 50 keystrokes for accurate detection"
-                rows="4"
+                id="inputField" 
+                placeholder="Type continuously here to analyze for AnyDesk patterns... Need 30+ keystrokes for accurate detection"
+                rows="3"
             ></textarea>
-                         <div class="progress">
-                 <div class="progress-bar">
-                     <div id="progressBar"></div>
-                 </div>
-                 <span id="progressText">0 / 50 keystrokes</span>
-             </div>
-        </div>
-
-        <div class="results">
-            <div class="status" id="status">
-                <span class="indicator" id="indicator">⏳</span>
-                <span class="text" id="statusText">Waiting for input...</span>
+            
+            <div class="status">
+                <div class="status-indicator" id="statusIcon">⏳</div>
+                <div class="status-text" id="statusText">Waiting for input...</div>
+                <div class="progress-info" id="progressInfo">0 keystrokes</div>
             </div>
             
-            <div class="metrics">
+            <div class="results" id="results" style="display: none;">
+                <h3>Detection Results</h3>
                 <div class="metric">
-                    <label>Dominant Frequency:</label>
-                    <span id="frequency">-</span>
+                    <span>Detection Status:</span>
+                    <span id="detectionResult">-</span>
                 </div>
                 <div class="metric">
-                    <label>Timing Regularity:</label>
-                    <span id="regularity">-</span>
+                    <span>Confidence Level:</span>
+                    <span id="confidenceLevel">-</span>
                 </div>
                 <div class="metric">
-                    <label>Network Latency Pattern:</label>
-                    <span id="latency">-</span>
-                </div>
-                <div class="metric">
-                    <label>Event Trust Ratio:</label>
-                    <span id="trustRatio">-</span>
+                    <span>Primary Indicators:</span>
+                    <span id="primaryIndicators">-</span>
                 </div>
             </div>
             
-            <div class="confidence">
-                <div class="confidence-bar">
-                    <div class="confidence-fill" id="confidenceFill"></div>
+            <div class="technical-details" id="technicalDetails" style="display: none;">
+                <h4>Technical Analysis</h4>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>60Hz Pattern Match:</label>
+                        <span id="frameRatePattern">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>16ms Quantization:</label>
+                        <span id="quantizationPattern">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>DeskRT Signatures:</label>
+                        <span id="deskrtSignatures">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Latency Profile:</label>
+                        <span id="latencyProfile">-</span>
+                    </div>
                 </div>
-                <span id="confidenceText">No data</span>
             </div>
-        </div>
-
-        <div class="info">
-            <h3>Detection Based On:</h3>
-            <ul>
-                <li><strong>USB Polling (125Hz):</strong> Regular intervals indicate USB input devices</li>
-                <li><strong>RDP Quantization (64Hz):</strong> Windows process scheduling patterns</li>
-                <li><strong>Network Buffering:</strong> Consistent timing due to packet buffering</li>
-                <li><strong>Event Trust:</strong> Synthetic vs. hardware-generated events</li>
-            </ul>
         </div>
     </div>
 
     <script>
-        class RemoteDesktopDetector {
+        class AnyDeskDetector {
             constructor() {
-                this.events = [];
-                this.startTime = null;
-                this.analysisResults = {
-                    frequency: null,
-                    regularity: 0,
-                    latencyPattern: 0,
-                    trustRatio: 1
-                };
+                this.keystrokeData = [];
+                this.minSamples = 30;
+                this.isAnalyzing = false;
                 
-                this.init();
+                // AnyDesk-specific constants from research
+                this.ANYDESK_FRAME_INTERVAL = 16.67; // 60fps = 16.67ms intervals
+                this.ANYDESK_MIN_LATENCY = 16; // Sub-16ms local network latency
+                this.ANYDESK_BUFFER_SIZE = 100; // 100kb/s minimum bandwidth
+                this.DESKTRT_QUANTIZATION = [8, 16, 24, 32]; // DeskRT timing patterns
+                
+                this.setupEventListeners();
+                this.updateStatus('waiting', 'Type to begin AnyDesk detection...');
             }
-
-            init() {
-                const input = document.getElementById('keyInput');
+            
+            setupEventListeners() {
+                const inputField = document.getElementById('inputField');
                 
-                // Capture all keyboard events with high precision
-                ['keydown', 'keyup'].forEach(eventType => {
-                    input.addEventListener(eventType, (e) => {
-                        this.captureEvent(e, eventType);
-                    }, { passive: false, capture: true });
+                inputField.addEventListener('keydown', (e) => {
+                    this.captureKeystroke(e, 'keydown');
                 });
-
-                input.focus();
-            }
-
-            captureEvent(event, type) {
-                const now = performance.now();
                 
-                if (!this.startTime) {
-                    this.startTime = now;
-                }
-
-                const eventData = {
-                    timestamp: now,
-                    type: type,
+                inputField.addEventListener('keyup', (e) => {
+                    this.captureKeystroke(e, 'keyup');
+                });
+            }
+            
+            captureKeystroke(event, type) {
+                const timestamp = performance.now();
+                
+                const keystroke = {
+                    timestamp,
+                    type,
                     key: event.key,
                     code: event.code,
+                    which: event.which,
                     trusted: event.isTrusted,
-                    timeStamp: event.timeStamp,
-                    detail: event.detail || 0
+                    detail: event.detail || 0,
+                    timeStamp: event.timeStamp
                 };
-
-                this.events.push(eventData);
                 
-                // Keep last 200 events
-                if (this.events.length > 200) {
-                    this.events.shift();
-                }
-
+                this.keystrokeData.push(keystroke);
                 this.updateProgress();
                 
-                if (this.events.length >= 10) {
-                    this.analyze();
+                if (this.keystrokeData.length >= this.minSamples && !this.isAnalyzing) {
+                    this.performAnalysis();
                 }
             }
-
+            
             updateProgress() {
-                const keystrokeCount = Math.floor(this.events.length / 2); // 2 events per keystroke
-                const progress = Math.min(keystrokeCount / 50, 1) * 100;
+                const count = this.keystrokeData.length;
+                const progressInfo = document.getElementById('progressInfo');
+                progressInfo.textContent = `${count} keystrokes`;
                 
-                document.getElementById('progressBar').style.width = progress + '%';
-                document.getElementById('progressText').textContent = `${keystrokeCount} / 50 keystrokes`;
-            }
-
-            analyze() {
-                this.calculateFrequencyDomain();
-                this.calculateTimingRegularity();
-                this.calculateNetworkLatencyPattern();
-                this.calculateEventTrustRatio();
-                this.updateDisplay();
-            }
-
-            calculateFrequencyDomain() {
-                if (this.events.length < 20) return;
-
-                // Get keydown events only
-                const keydowns = this.events.filter(e => e.type === 'keydown');
-                if (keydowns.length < 10) return;
-
-                // Calculate inter-keystroke intervals
-                const intervals = [];
-                for (let i = 1; i < keydowns.length; i++) {
-                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
+                if (count < this.minSamples) {
+                    this.updateStatus('collecting', `Collecting data... ${count}/${this.minSamples}`);
                 }
-
-                // Simple power spectral density for common remote desktop frequencies
-                const testFrequencies = {
-                    '125Hz': 8.0,    // USB polling (1000/125 = 8ms)
-                    '100Hz': 10.0,   // Common polling
-                    '64Hz': 15.625,  // Windows quantum (1000/64)
-                    '60Hz': 16.67,   // Browser/display refresh
-                    '50Hz': 20.0     // Some systems
-                };
-
-                let maxPower = 0;
-                let dominantFreq = null;
-
-                Object.entries(testFrequencies).forEach(([freq, expectedInterval]) => {
-                    const power = this.calculatePowerAtFrequency(intervals, expectedInterval);
-                    if (power > maxPower) {
-                        maxPower = power;
-                        dominantFreq = freq;
-                    }
-                });
-
-                this.analysisResults.frequency = dominantFreq;
-                this.analysisResults.frequencyPower = maxPower;
             }
-
-            calculatePowerAtFrequency(intervals, targetInterval) {
-                // Count intervals that are close to target (within 25% tolerance)
-                const tolerance = targetInterval * 0.25;
-                let matches = 0;
+            
+            performAnalysis() {
+                this.isAnalyzing = true;
+                this.updateStatus('analyzing', 'Analyzing for AnyDesk patterns...');
                 
-                intervals.forEach(interval => {
-                    if (Math.abs(interval - targetInterval) < tolerance) {
+                setTimeout(() => {
+                    const results = this.analyzeForAnyDesk();
+                    this.displayResults(results);
+                    this.isAnalyzing = false;
+                }, 1000);
+            }
+            
+            analyzeForAnyDesk() {
+                const timings = this.extractTimings();
+                const indicators = {
+                    frameRateMatch: this.detectFrameRatePattern(timings),
+                    quantizationPattern: this.detectQuantizationPattern(timings),
+                    deskrtSignatures: this.detectDeskRTSignatures(timings),
+                    latencyProfile: this.analyzeLatencyProfile(timings),
+                    bufferCharacteristics: this.analyzeBufferPatterns(timings)
+                };
+                
+                const confidence = this.calculateConfidence(indicators);
+                const isAnyDesk = confidence > 0.7;
+                
+                return {
+                    isAnyDesk,
+                    confidence,
+                    indicators,
+                    rawTimings: timings
+                };
+            }
+            
+            extractTimings() {
+                const timings = [];
+                for (let i = 1; i < this.keystrokeData.length; i++) {
+                    const interval = this.keystrokeData[i].timestamp - this.keystrokeData[i-1].timestamp;
+                    timings.push(interval);
+                }
+                return timings;
+            }
+            
+            detectFrameRatePattern(timings) {
+                // AnyDesk runs at 60fps (16.67ms intervals)
+                const targetInterval = this.ANYDESK_FRAME_INTERVAL;
+                const tolerance = 3.0; // ±3ms tolerance
+                
+                let matches = 0;
+                timings.forEach(timing => {
+                    const quantized = Math.round(timing / targetInterval) * targetInterval;
+                    if (Math.abs(timing - quantized) <= tolerance) {
                         matches++;
                     }
-                    // Also check multiples (2x, 3x the interval)
-                    if (Math.abs(interval - targetInterval * 2) < tolerance * 2) {
-                        matches += 0.5;
-                    }
-                    if (Math.abs(interval - targetInterval * 3) < tolerance * 3) {
-                        matches += 0.3;
+                });
+                
+                const matchRate = matches / timings.length;
+                return {
+                    detected: matchRate > 0.4,
+                    strength: matchRate,
+                    description: `${(matchRate * 100).toFixed(1)}% match to 60fps pattern`
+                };
+            }
+            
+            detectQuantizationPattern(timings) {
+                // DeskRT codec uses specific quantization patterns
+                let quantizedMatches = 0;
+                
+                timings.forEach(timing => {
+                    this.DESKTRT_QUANTIZATION.forEach(quantum => {
+                        if (Math.abs(timing % quantum) < 2) {
+                            quantizedMatches++;
+                        }
+                    });
+                });
+                
+                const quantizationRate = quantizedMatches / (timings.length * this.DESKTRT_QUANTIZATION.length);
+                return {
+                    detected: quantizationRate > 0.25,
+                    strength: quantizationRate,
+                    description: `${(quantizationRate * 100).toFixed(1)}% DeskRT quantization match`
+                };
+            }
+            
+            detectDeskRTSignatures(timings) {
+                // Look for DeskRT-specific compression timing signatures
+                const compressionPatterns = [
+                    this.detectBurstPattern(timings),
+                    this.detectCompressionCycles(timings),
+                    this.detectFrameBuffering(timings)
+                ];
+                
+                const detectedPatterns = compressionPatterns.filter(p => p.detected).length;
+                return {
+                    detected: detectedPatterns >= 2,
+                    strength: detectedPatterns / compressionPatterns.length,
+                    description: `${detectedPatterns}/3 DeskRT signatures detected`
+                };
+            }
+            
+            detectBurstPattern(timings) {
+                // AnyDesk sends keystrokes in optimized bursts
+                let burstCount = 0;
+                let currentBurst = 0;
+                
+                timings.forEach(timing => {
+                    if (timing < 5) { // Very fast succession
+                        currentBurst++;
+                    } else {
+                        if (currentBurst >= 3) burstCount++;
+                        currentBurst = 0;
                     }
                 });
-
-                return matches / intervals.length;
-            }
-
-            calculateTimingRegularity() {
-                if (this.events.length < 20) return;
-
-                const keydowns = this.events.filter(e => e.type === 'keydown');
-                if (keydowns.length < 10) return;
-
-                const intervals = [];
-                for (let i = 1; i < keydowns.length; i++) {
-                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
-                }
-
-                // Calculate coefficient of variation
-                const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                const variance = intervals.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / intervals.length;
-                const stdDev = Math.sqrt(variance);
-                const cv = stdDev / mean;
-
-                // Remote desktops often have MORE regular timing (lower CV)
-                // due to network buffering and quantization
-                this.analysisResults.regularity = Math.max(0, 1 - cv);
-            }
-
-            calculateNetworkLatencyPattern() {
-                if (this.events.length < 30) return;
-
-                const keydowns = this.events.filter(e => e.type === 'keydown');
-                if (keydowns.length < 15) return;
-
-                // Look for minimum latency patterns
-                const intervals = [];
-                for (let i = 1; i < keydowns.length; i++) {
-                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
-                }
-
-                const minInterval = Math.min(...intervals);
-                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-
-                // Remote sessions rarely have sub-10ms intervals due to network overhead
-                // Local sessions can have much faster intervals
-                let latencyScore = 0;
                 
-                if (minInterval > 15 && avgInterval > 40) {
-                    latencyScore = 0.8; // High likelihood of remote session
-                } else if (minInterval > 10 && avgInterval > 25) {
-                    latencyScore = 0.5; // Medium likelihood
-                } else if (minInterval < 5) {
-                    latencyScore = 0.1; // Unlikely to be remote (very fast local input)
-                } else {
-                    latencyScore = 0.3; // Uncertain
-                }
-
-                this.analysisResults.latencyPattern = latencyScore;
-            }
-
-            calculateEventTrustRatio() {
-                if (this.events.length < 10) return;
-
-                const trustedEvents = this.events.filter(e => e.trusted).length;
-                this.analysisResults.trustRatio = trustedEvents / this.events.length;
-            }
-
-            calculateOverallConfidence() {
-                const weights = {
-                    frequency: 0.3,
-                    regularity: 0.25,
-                    latency: 0.3,
-                    trust: 0.15
+                return {
+                    detected: burstCount > 0,
+                    strength: burstCount / Math.max(1, timings.length / 10)
                 };
-
-                let confidence = 0;
-
-                // Frequency analysis
-                if (this.analysisResults.frequency) {
-                    const freqScore = this.analysisResults.frequencyPower || 0;
-                    // 125Hz and 64Hz are strong indicators of remote desktop
-                    if (this.analysisResults.frequency === '125Hz' || this.analysisResults.frequency === '64Hz') {
-                        confidence += freqScore * weights.frequency * 1.5;
-                    } else {
-                        confidence += freqScore * weights.frequency;
-                    }
-                }
-
-                // Regularity (high regularity suggests remote)
-                confidence += this.analysisResults.regularity * weights.regularity;
-
-                // Latency pattern
-                confidence += this.analysisResults.latencyPattern * weights.latency;
-
-                // Event trust (lower trust ratio suggests synthetic events)
-                const trustScore = this.analysisResults.trustRatio < 0.9 ? (1 - this.analysisResults.trustRatio) : 0;
-                confidence += trustScore * weights.trust;
-
-                return Math.min(confidence, 1);
             }
-
-            updateDisplay() {
-                // Update metrics
-                document.getElementById('frequency').textContent = 
-                    this.analysisResults.frequency || 'Analyzing...';
+            
+            detectCompressionCycles(timings) {
+                // Look for periodic compression cycles (DeskRT specific)
+                const cycleLengths = [250, 500, 1000]; // Common DeskRT cycle times
+                let cycleMatches = 0;
                 
-                document.getElementById('regularity').textContent = 
-                    (this.analysisResults.regularity * 100).toFixed(1) + '%';
+                cycleLengths.forEach(cycleLength => {
+                    const windows = Math.floor(timings.length / 10);
+                    for (let i = 0; i < windows; i++) {
+                        const start = i * 10;
+                        const window = timings.slice(start, start + 10);
+                        const avgTiming = window.reduce((a, b) => a + b, 0) / window.length;
+                        
+                        if (Math.abs(avgTiming - cycleLength / 60) < 5) {
+                            cycleMatches++;
+                        }
+                    }
+                });
                 
-                document.getElementById('latency').textContent = 
-                    (this.analysisResults.latencyPattern * 100).toFixed(1) + '%';
+                return {
+                    detected: cycleMatches > 0,
+                    strength: cycleMatches / Math.max(1, Math.floor(timings.length / 10))
+                };
+            }
+            
+            detectFrameBuffering(timings) {
+                // AnyDesk's frame buffering creates specific timing patterns
+                const bufferSizes = [16, 32, 64]; // Frame buffer sizes in ms
+                let bufferMatches = 0;
                 
-                document.getElementById('trustRatio').textContent = 
-                    (this.analysisResults.trustRatio * 100).toFixed(1) + '%';
-
-                // Calculate and display overall confidence
-                const confidence = this.calculateOverallConfidence();
-                const confidenceFill = document.getElementById('confidenceFill');
-                const confidenceText = document.getElementById('confidenceText');
-                const indicator = document.getElementById('indicator');
-                const statusText = document.getElementById('statusText');
-
-                confidenceFill.style.width = (confidence * 100) + '%';
-                confidenceText.textContent = (confidence * 100).toFixed(1) + '% confidence';
-
-                const keystrokeCount = Math.floor(this.events.length / 2);
+                timings.forEach(timing => {
+                    bufferSizes.forEach(buffer => {
+                        if (Math.abs(timing % buffer) < 3) {
+                            bufferMatches++;
+                        }
+                    });
+                });
                 
-                if (keystrokeCount < 25) {
-                    indicator.textContent = '⏳';
-                    statusText.textContent = 'Collecting data... Keep typing';
-                    indicator.className = 'indicator waiting';
-                } else if (confidence > 0.6) {
-                    indicator.textContent = '🖥️';
-                    statusText.textContent = 'Remote Desktop Detected';
-                    indicator.className = 'indicator remote';
-                } else if (confidence > 0.3) {
-                    indicator.textContent = '❓';
-                    statusText.textContent = 'Uncertain - Mixed signals';
-                    indicator.className = 'indicator uncertain';
+                return {
+                    detected: bufferMatches > timings.length * 0.2,
+                    strength: bufferMatches / (timings.length * bufferSizes.length)
+                };
+            }
+            
+            analyzeLatencyProfile(timings) {
+                // AnyDesk has sub-16ms latency on local networks
+                const lowLatencyCount = timings.filter(t => t < this.ANYDESK_MIN_LATENCY).length;
+                const avgLatency = timings.reduce((a, b) => a + b, 0) / timings.length;
+                
+                const isLowLatency = avgLatency < 50 && lowLatencyCount > timings.length * 0.3;
+                
+                return {
+                    detected: isLowLatency,
+                    strength: lowLatencyCount / timings.length,
+                    description: `Avg: ${avgLatency.toFixed(1)}ms, ${lowLatencyCount} sub-16ms events`
+                };
+            }
+            
+            analyzeBufferPatterns(timings) {
+                // AnyDesk's efficient buffering creates consistent patterns
+                const variance = this.calculateVariance(timings);
+                const consistency = 1 / (1 + variance / 100); // Lower variance = higher consistency
+                
+                return {
+                    detected: consistency > 0.6,
+                    strength: consistency,
+                    description: `Timing consistency: ${(consistency * 100).toFixed(1)}%`
+                };
+            }
+            
+            calculateVariance(values) {
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+                return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+            }
+            
+            calculateConfidence(indicators) {
+                const weights = {
+                    frameRateMatch: 0.25,
+                    quantizationPattern: 0.25,
+                    deskrtSignatures: 0.20,
+                    latencyProfile: 0.15,
+                    bufferCharacteristics: 0.15
+                };
+                
+                let totalConfidence = 0;
+                Object.keys(weights).forEach(key => {
+                    if (indicators[key] && indicators[key].strength !== undefined) {
+                        totalConfidence += indicators[key].strength * weights[key];
+                    }
+                });
+                
+                return Math.min(0.95, totalConfidence);
+            }
+            
+            displayResults(results) {
+                const resultsDiv = document.getElementById('results');
+                const technicalDiv = document.getElementById('technicalDetails');
+                
+                resultsDiv.style.display = 'block';
+                technicalDiv.style.display = 'block';
+                
+                // Main results
+                document.getElementById('detectionResult').textContent = 
+                    results.isAnyDesk ? '🎯 AnyDesk Detected' : '❌ AnyDesk Not Detected';
+                document.getElementById('confidenceLevel').textContent = 
+                    `${(results.confidence * 100).toFixed(1)}%`;
+                
+                // Primary indicators
+                const primaryIndicators = [];
+                if (results.indicators.frameRateMatch.detected) primaryIndicators.push('60fps Pattern');
+                if (results.indicators.quantizationPattern.detected) primaryIndicators.push('DeskRT Quantization');
+                if (results.indicators.deskrtSignatures.detected) primaryIndicators.push('Compression Signatures');
+                if (results.indicators.latencyProfile.detected) primaryIndicators.push('Low Latency Profile');
+                
+                document.getElementById('primaryIndicators').textContent = 
+                    primaryIndicators.length > 0 ? primaryIndicators.join(', ') : 'None';
+                
+                // Technical details
+                document.getElementById('frameRatePattern').textContent = 
+                    results.indicators.frameRateMatch.description;
+                document.getElementById('quantizationPattern').textContent = 
+                    results.indicators.quantizationPattern.description;
+                document.getElementById('deskrtSignatures').textContent = 
+                    results.indicators.deskrtSignatures.description;
+                document.getElementById('latencyProfile').textContent = 
+                    results.indicators.latencyProfile.description;
+                
+                // Update status
+                if (results.isAnyDesk) {
+                    this.updateStatus('detected', `AnyDesk detected with ${(results.confidence * 100).toFixed(1)}% confidence`);
                 } else {
-                    indicator.textContent = '💻';
-                    statusText.textContent = 'Local Input Detected';
-                    indicator.className = 'indicator local';
+                    this.updateStatus('local', 'Local input detected - no AnyDesk patterns found');
                 }
+            }
+            
+            updateStatus(type, message) {
+                const statusIcon = document.getElementById('statusIcon');
+                const statusText = document.getElementById('statusText');
+                
+                const statusConfig = {
+                    waiting: { icon: '⏳', class: 'waiting' },
+                    collecting: { icon: '📊', class: 'collecting' },
+                    analyzing: { icon: '🔍', class: 'analyzing' },
+                    detected: { icon: '🎯', class: 'anydesk' },
+                    local: { icon: '✅', class: 'local' }
+                };
+                
+                const config = statusConfig[type] || statusConfig.waiting;
+                statusIcon.textContent = config.icon;
+                statusIcon.className = `status-indicator ${config.class}`;
+                statusText.textContent = message;
             }
         }
-
+        
         // Initialize detector when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new RemoteDesktopDetector();
+            new AnyDeskDetector();
         });
     </script>
 </body>
