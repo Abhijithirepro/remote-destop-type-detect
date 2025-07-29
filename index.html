@@ -3,387 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Desktop Keystroke Detector</title>
+    <title>Remote Desktop Detection</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🔍 Remote Desktop Keystroke Detector</h1>
-            <p>Analyzing keystrokes to detect remote desktop sessions</p>
-        </header>
+        <h1>🔍 Remote Desktop Detection</h1>
+        <p>Analyzes keystroke timing patterns to detect AnyDesk, RDP, VNC sessions</p>
+        
+        <div class="input-area">
+            <textarea 
+                id="keyInput" 
+                placeholder="Type continuously here... Need at least 50 keystrokes for accurate detection"
+                rows="4"
+            ></textarea>
+                         <div class="progress">
+                 <div class="progress-bar">
+                     <div id="progressBar"></div>
+                 </div>
+                 <span id="progressText">0 / 50 keystrokes</span>
+             </div>
+        </div>
 
-        <div class="detection-area">
-            <div class="input-section">
-                <h2>Test Input Area</h2>
-                <textarea 
-                    id="testInput" 
-                    placeholder="Type here to test keystroke detection..."
-                    rows="6"
-                ></textarea>
-                <div class="input-instructions">
-                    <p>💡 <strong>Instructions:</strong></p>
-                    <ul>
-                        <li>Type normally in the text area above</li>
-                        <li>Try different typing speeds and patterns</li>
-                        <li>Test with various keyboard layouts</li>
-                        <li>Compare local vs remote desktop behavior</li>
-                    </ul>
+        <div class="results">
+            <div class="status" id="status">
+                <span class="indicator" id="indicator">⏳</span>
+                <span class="text" id="statusText">Waiting for input...</span>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric">
+                    <label>Dominant Frequency:</label>
+                    <span id="frequency">-</span>
+                </div>
+                <div class="metric">
+                    <label>Timing Regularity:</label>
+                    <span id="regularity">-</span>
+                </div>
+                <div class="metric">
+                    <label>Network Latency Pattern:</label>
+                    <span id="latency">-</span>
+                </div>
+                <div class="metric">
+                    <label>Event Trust Ratio:</label>
+                    <span id="trustRatio">-</span>
                 </div>
             </div>
-
-            <div class="results-section">
-                <h2>Detection Results</h2>
-                <div class="result-grid">
-                    <div class="result-card" id="timingCard">
-                        <h3>⏱️ Timing Analysis</h3>
-                        <div class="metric">
-                            <span class="label">Average Interval:</span>
-                            <span class="value" id="avgInterval">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Variance:</span>
-                            <span class="value" id="timingVariance">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Pattern Score:</span>
-                            <span class="value" id="timingScore">-</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card" id="keyboardCard">
-                        <h3>⌨️ Keyboard Analysis</h3>
-                        <div class="metric">
-                            <span class="label">Key Codes:</span>
-                            <span class="value" id="keyCodes">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Modifier Usage:</span>
-                            <span class="value" id="modifierUsage">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Layout Detection:</span>
-                            <span class="value" id="layoutDetection">-</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card" id="browserCard">
-                        <h3>🌐 Browser Signals</h3>
-                        <div class="metric">
-                            <span class="label">User Agent:</span>
-                            <span class="value" id="userAgent">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Screen Resolution:</span>
-                            <span class="value" id="screenResolution">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Connection Type:</span>
-                            <span class="value" id="connectionType">-</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card" id="performanceCard">
-                        <h3>⚡ Performance Metrics</h3>
-                        <div class="metric">
-                            <span class="label">Event Latency:</span>
-                            <span class="value" id="eventLatency">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Processing Time:</span>
-                            <span class="value" id="processingTime">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Memory Usage:</span>
-                            <span class="value" id="memoryUsage">-</span>
-                        </div>
-                    </div>
+            
+            <div class="confidence">
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill"></div>
                 </div>
-
-                <div class="overall-result">
-                    <h3>🎯 Overall Assessment</h3>
-                    <div class="assessment" id="overallAssessment">
-                        <div class="confidence-meter">
-                            <div class="meter-bar">
-                                <div class="meter-fill" id="confidenceFill"></div>
-                            </div>
-                            <span class="confidence-text" id="confidenceText">No data yet</span>
-                        </div>
-                        <div class="detection-status" id="detectionStatus">
-                            <span class="status-indicator" id="statusIndicator">⏳</span>
-                            <span class="status-text" id="statusText">Waiting for input...</span>
-                        </div>
-                    </div>
-                </div>
+                <span id="confidenceText">No data</span>
             </div>
         </div>
 
-        <div class="info-section">
-            <h2>📊 Detection Methodology</h2>
-            <div class="methodology-grid">
-                <div class="methodology-item">
-                    <h4>⏱️ Timing Patterns</h4>
-                    <p>Analyzes intervals between keystrokes. Remote sessions often have more consistent timing due to network buffering.</p>
-                </div>
-                <div class="methodology-item">
-                    <h4>⌨️ Keyboard Signals</h4>
-                    <p>Examines key codes, modifier usage, and layout patterns that may differ in remote environments.</p>
-                </div>
-                <div class="methodology-item">
-                    <h4>🌐 Browser Fingerprinting</h4>
-                    <p>Checks user agent, screen properties, and connection characteristics typical of remote sessions.</p>
-                </div>
-                <div class="methodology-item">
-                    <h4>⚡ Performance Analysis</h4>
-                    <p>Measures event processing latency and memory usage patterns that can indicate remote processing.</p>
-                </div>
-            </div>
+        <div class="info">
+            <h3>Detection Based On:</h3>
+            <ul>
+                <li><strong>USB Polling (125Hz):</strong> Regular intervals indicate USB input devices</li>
+                <li><strong>RDP Quantization (64Hz):</strong> Windows process scheduling patterns</li>
+                <li><strong>Network Buffering:</strong> Consistent timing due to packet buffering</li>
+                <li><strong>Event Trust:</strong> Synthetic vs. hardware-generated events</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        class AdvancedKeystrokeDetector {
+        class RemoteDesktopDetector {
             constructor() {
-                this.keystrokeEvents = [];
-                this.mouseEvents = [];
-                this.touchEvents = [];
-                this.focusEvents = [];
-                this.baselineMetrics = null;
-                this.detectionScores = {
-                    timing: 0,
-                    pattern: 0,
-                    environment: 0,
-                    behavior: 0
+                this.events = [];
+                this.startTime = null;
+                this.analysisResults = {
+                    frequency: null,
+                    regularity: 0,
+                    latencyPattern: 0,
+                    trustRatio: 1
                 };
                 
-                this.initializeAdvancedDetection();
-                this.setupComprehensiveListeners();
-                this.startAdvancedAnalysis();
+                this.init();
             }
 
-            initializeAdvancedDetection() {
-                // Capture baseline environment metrics
-                this.captureEnvironmentBaseline();
+            init() {
+                const input = document.getElementById('keyInput');
                 
-                // Initialize high-precision timing
-                this.initializeHighPrecisionTiming();
-                
-                // Setup device capability detection
-                this.detectDeviceCapabilities();
-            }
-
-            captureEnvironmentBaseline() {
-                this.baselineMetrics = {
-                    devicePixelRatio: window.devicePixelRatio,
-                    screenColorDepth: screen.colorDepth,
-                    availableScreenArea: screen.availWidth * screen.availHeight,
-                    totalScreenArea: screen.width * screen.height,
-                    hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-                    maxTouchPoints: navigator.maxTouchPoints || 0,
-                    cookieEnabled: navigator.cookieEnabled,
-                    onLine: navigator.onLine,
-                    doNotTrack: navigator.doNotTrack,
-                    webdriver: navigator.webdriver,
-                    languages: navigator.languages?.length || 0,
-                    plugins: navigator.plugins?.length || 0,
-                    mimeTypes: navigator.mimeTypes?.length || 0
-                };
-            }
-
-            initializeHighPrecisionTiming() {
-                this.performanceBaseline = {
-                    initialTime: performance.now(),
-                    timeOrigin: performance.timeOrigin,
-                    navigationStart: performance.timing?.navigationStart || 0
-                };
-            }
-
-            detectDeviceCapabilities() {
-                this.deviceCapabilities = {
-                    hasTouch: 'ontouchstart' in window,
-                    hasPointer: 'onpointerdown' in window,
-                    hasGamepad: 'getGamepads' in navigator,
-                    hasVibration: 'vibrate' in navigator,
-                    hasWebGL: this.detectWebGL(),
-                    hasWebRTC: this.detectWebRTC(),
-                    hasMediaDevices: 'mediaDevices' in navigator,
-                    batteryAPI: 'getBattery' in navigator
-                };
-            }
-
-            detectWebGL() {
-                try {
-                    const canvas = document.createElement('canvas');
-                    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-                } catch (e) {
-                    return false;
-                }
-            }
-
-            detectWebRTC() {
-                return !!(window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection);
-            }
-
-            setupComprehensiveListeners() {
-                const testInput = document.getElementById('testInput');
-                
-                // Comprehensive keyboard event capture
-                ['keydown', 'keyup', 'keypress'].forEach(eventType => {
-                    testInput.addEventListener(eventType, (e) => {
-                        this.captureKeystrokeEvent(e, eventType);
+                // Capture all keyboard events with high precision
+                ['keydown', 'keyup'].forEach(eventType => {
+                    input.addEventListener(eventType, (e) => {
+                        this.captureEvent(e, eventType);
                     }, { passive: false, capture: true });
                 });
 
-                // Mouse and pointer events
-                ['mousedown', 'mouseup', 'mousemove', 'click'].forEach(eventType => {
-                    testInput.addEventListener(eventType, (e) => {
-                        this.captureMouseEvent(e, eventType);
-                    }, { passive: false });
-                });
-
-                // Touch events for mobile/tablet detection
-                if (this.deviceCapabilities.hasTouch) {
-                    ['touchstart', 'touchend', 'touchmove'].forEach(eventType => {
-                        testInput.addEventListener(eventType, (e) => {
-                            this.captureTouchEvent(e, eventType);
-                        }, { passive: false });
-                    });
-                }
-
-                // Focus and composition events
-                ['focus', 'blur', 'compositionstart', 'compositionend'].forEach(eventType => {
-                    testInput.addEventListener(eventType, (e) => {
-                        this.captureFocusEvent(e, eventType);
-                    });
-                });
-
-                // Advanced input event
-                testInput.addEventListener('input', (e) => {
-                    this.captureInputEvent(e);
-                }, { passive: false });
+                input.focus();
             }
 
-            captureKeystrokeEvent(event, eventType) {
-                const highPrecisionTime = performance.now();
+            captureEvent(event, type) {
+                const now = performance.now();
+                
+                if (!this.startTime) {
+                    this.startTime = now;
+                }
+
                 const eventData = {
-                    timestamp: highPrecisionTime,
-                    type: eventType,
+                    timestamp: now,
+                    type: type,
                     key: event.key,
                     code: event.code,
-                    keyCode: event.keyCode,
-                    which: event.which,
-                    location: event.location,
-                    repeat: event.repeat,
-                    isComposing: event.isComposing,
-                    modifiers: {
-                        ctrl: event.ctrlKey,
-                        shift: event.shiftKey,
-                        alt: event.altKey,
-                        meta: event.metaKey
-                    },
                     trusted: event.isTrusted,
-                    detail: event.detail,
-                    eventPhase: event.eventPhase,
-                    bubbles: event.bubbles,
-                    cancelable: event.cancelable,
                     timeStamp: event.timeStamp,
-                    view: event.view ? 'Window' : 'null',
-                    processingDelay: this.measureProcessingDelay(event)
+                    detail: event.detail || 0
                 };
 
-                this.keystrokeEvents.push(eventData);
+                this.events.push(eventData);
                 
-                // Keep last 50 events for analysis
-                if (this.keystrokeEvents.length > 50) {
-                    this.keystrokeEvents.shift();
+                // Keep last 200 events
+                if (this.events.length > 200) {
+                    this.events.shift();
                 }
 
-                this.performRealTimeAnalysis();
-            }
-
-            captureMouseEvent(event, eventType) {
-                this.mouseEvents.push({
-                    timestamp: performance.now(),
-                    type: eventType,
-                    x: event.clientX,
-                    y: event.clientY,
-                    button: event.button,
-                    buttons: event.buttons,
-                    trusted: event.isTrusted,
-                    detail: event.detail
-                });
-
-                if (this.mouseEvents.length > 20) {
-                    this.mouseEvents.shift();
+                this.updateProgress();
+                
+                if (this.events.length >= 10) {
+                    this.analyze();
                 }
             }
 
-            captureTouchEvent(event, eventType) {
-                this.touchEvents.push({
-                    timestamp: performance.now(),
-                    type: eventType,
-                    touchCount: event.touches.length,
-                    trusted: event.isTrusted
-                });
-
-                if (this.touchEvents.length > 20) {
-                    this.touchEvents.shift();
-                }
-            }
-
-            captureFocusEvent(event, eventType) {
-                this.focusEvents.push({
-                    timestamp: performance.now(),
-                    type: eventType,
-                    trusted: event.isTrusted
-                });
-
-                if (this.focusEvents.length > 10) {
-                    this.focusEvents.shift();
-                }
-            }
-
-            captureInputEvent(event) {
-                // Input event specific analysis
-                const inputData = {
-                    timestamp: performance.now(),
-                    inputType: event.inputType,
-                    data: event.data,
-                    isComposing: event.isComposing,
-                    trusted: event.isTrusted
-                };
+            updateProgress() {
+                const keystrokeCount = Math.floor(this.events.length / 2); // 2 events per keystroke
+                const progress = Math.min(keystrokeCount / 50, 1) * 100;
                 
-                this.analyzeInputConsistency(inputData);
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `${keystrokeCount} / 50 keystrokes`;
             }
 
-            measureProcessingDelay(event) {
-                const startTime = performance.now();
-                // Minimal processing to measure baseline delay
-                const delay = performance.now() - startTime;
-                return delay;
+            analyze() {
+                this.calculateFrequencyDomain();
+                this.calculateTimingRegularity();
+                this.calculateNetworkLatencyPattern();
+                this.calculateEventTrustRatio();
+                this.updateDisplay();
             }
 
-            performRealTimeAnalysis() {
-                if (this.keystrokeEvents.length < 3) return;
+            calculateFrequencyDomain() {
+                if (this.events.length < 20) return;
 
-                // 1. Advanced Timing Analysis
-                this.detectionScores.timing = this.analyzeAdvancedTiming();
-                
-                // 2. Pattern Recognition
-                this.detectionScores.pattern = this.analyzeKeystrokePatterns();
-                
-                // 3. Environment Analysis
-                this.detectionScores.environment = this.analyzeEnvironmentSignals();
-                
-                // 4. Behavioral Analysis
-                this.detectionScores.behavior = this.analyzeBehavioralPatterns();
-
-                this.updateAdvancedDisplay();
-            }
-
-            analyzeAdvancedTiming() {
-                const keydowns = this.keystrokeEvents.filter(e => e.type === 'keydown');
-                if (keydowns.length < 3) return 0;
+                // Get keydown events only
+                const keydowns = this.events.filter(e => e.type === 'keydown');
+                if (keydowns.length < 10) return;
 
                 // Calculate inter-keystroke intervals
                 const intervals = [];
@@ -391,421 +157,195 @@
                     intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
                 }
 
-                // Statistical analysis
+                // Simple power spectral density for common remote desktop frequencies
+                const testFrequencies = {
+                    '125Hz': 8.0,    // USB polling (1000/125 = 8ms)
+                    '100Hz': 10.0,   // Common polling
+                    '64Hz': 15.625,  // Windows quantum (1000/64)
+                    '60Hz': 16.67,   // Browser/display refresh
+                    '50Hz': 20.0     // Some systems
+                };
+
+                let maxPower = 0;
+                let dominantFreq = null;
+
+                Object.entries(testFrequencies).forEach(([freq, expectedInterval]) => {
+                    const power = this.calculatePowerAtFrequency(intervals, expectedInterval);
+                    if (power > maxPower) {
+                        maxPower = power;
+                        dominantFreq = freq;
+                    }
+                });
+
+                this.analysisResults.frequency = dominantFreq;
+                this.analysisResults.frequencyPower = maxPower;
+            }
+
+            calculatePowerAtFrequency(intervals, targetInterval) {
+                // Count intervals that are close to target (within 25% tolerance)
+                const tolerance = targetInterval * 0.25;
+                let matches = 0;
+                
+                intervals.forEach(interval => {
+                    if (Math.abs(interval - targetInterval) < tolerance) {
+                        matches++;
+                    }
+                    // Also check multiples (2x, 3x the interval)
+                    if (Math.abs(interval - targetInterval * 2) < tolerance * 2) {
+                        matches += 0.5;
+                    }
+                    if (Math.abs(interval - targetInterval * 3) < tolerance * 3) {
+                        matches += 0.3;
+                    }
+                });
+
+                return matches / intervals.length;
+            }
+
+            calculateTimingRegularity() {
+                if (this.events.length < 20) return;
+
+                const keydowns = this.events.filter(e => e.type === 'keydown');
+                if (keydowns.length < 10) return;
+
+                const intervals = [];
+                for (let i = 1; i < keydowns.length; i++) {
+                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
+                }
+
+                // Calculate coefficient of variation
                 const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
                 const variance = intervals.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / intervals.length;
                 const stdDev = Math.sqrt(variance);
-                const coefficientOfVariation = stdDev / mean;
+                const cv = stdDev / mean;
 
-                // Timing regularity analysis (remote desktop indicator)
-                const regularityScore = this.calculateTimingRegularity(intervals);
-                
-                // Network latency patterns
-                const latencyScore = this.analyzeLatencyPatterns(intervals);
-                
-                // Event trust analysis
-                const trustScore = this.analyzeEventTrust();
-
-                // Composite timing score (higher = more likely remote)
-                let timingScore = 0;
-                
-                // Remote desktops often have more regular timing
-                if (coefficientOfVariation < 0.3) timingScore += 0.3;
-                if (regularityScore > 0.7) timingScore += 0.25;
-                if (latencyScore > 0.6) timingScore += 0.25;
-                if (trustScore < 0.8) timingScore += 0.2;
-
-                return Math.min(timingScore, 1);
+                // Remote desktops often have MORE regular timing (lower CV)
+                // due to network buffering and quantization
+                this.analysisResults.regularity = Math.max(0, 1 - cv);
             }
 
-            calculateTimingRegularity(intervals) {
-                if (intervals.length < 5) return 0;
-                
-                // Look for patterns that suggest buffering/compression
-                const sortedIntervals = [...intervals].sort((a, b) => a - b);
-                const median = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
-                
-                // Count intervals close to common network timing multiples
-                const networkTimings = [16.67, 33.33, 50, 100]; // Common refresh/network intervals
-                let networkMatches = 0;
-                
-                intervals.forEach(interval => {
-                    if (networkTimings.some(timing => Math.abs(interval - timing) < 5)) {
-                        networkMatches++;
-                    }
-                });
-                
-                return networkMatches / intervals.length;
-            }
+            calculateNetworkLatencyPattern() {
+                if (this.events.length < 30) return;
 
-            analyzeLatencyPatterns(intervals) {
-                // Look for minimum latencies that suggest network overhead
+                const keydowns = this.events.filter(e => e.type === 'keydown');
+                if (keydowns.length < 15) return;
+
+                // Look for minimum latency patterns
+                const intervals = [];
+                for (let i = 1; i < keydowns.length; i++) {
+                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
+                }
+
                 const minInterval = Math.min(...intervals);
                 const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+                // Remote sessions rarely have sub-10ms intervals due to network overhead
+                // Local sessions can have much faster intervals
+                let latencyScore = 0;
                 
-                // Remote sessions rarely have sub-10ms intervals
-                if (minInterval > 10 && avgInterval > 30) {
-                    return 0.8;
-                } else if (minInterval > 5 && avgInterval > 20) {
-                    return 0.5;
+                if (minInterval > 15 && avgInterval > 40) {
+                    latencyScore = 0.8; // High likelihood of remote session
+                } else if (minInterval > 10 && avgInterval > 25) {
+                    latencyScore = 0.5; // Medium likelihood
+                } else if (minInterval < 5) {
+                    latencyScore = 0.1; // Unlikely to be remote (very fast local input)
+                } else {
+                    latencyScore = 0.3; // Uncertain
                 }
-                return 0.2;
+
+                this.analysisResults.latencyPattern = latencyScore;
             }
 
-            analyzeEventTrust() {
-                const totalEvents = this.keystrokeEvents.length;
-                const trustedEvents = this.keystrokeEvents.filter(e => e.trusted).length;
-                return trustedEvents / totalEvents;
+            calculateEventTrustRatio() {
+                if (this.events.length < 10) return;
+
+                const trustedEvents = this.events.filter(e => e.trusted).length;
+                this.analysisResults.trustRatio = trustedEvents / this.events.length;
             }
 
-            analyzeKeystrokePatterns() {
-                // Key sequence analysis
-                const keySequence = this.keystrokeEvents
-                    .filter(e => e.type === 'keydown')
-                    .map(e => e.code);
-                
-                // Look for unusual patterns
-                let patternScore = 0;
-                
-                // 1. Repeated key detection (auto-repeat handling differences)
-                const repeatEvents = this.keystrokeEvents.filter(e => e.repeat);
-                if (repeatEvents.length > 0) {
-                    const repeatTiming = this.analyzeRepeatTiming(repeatEvents);
-                    if (repeatTiming > 0.7) patternScore += 0.3;
-                }
-                
-                // 2. Modifier key analysis
-                const modifierScore = this.analyzeModifierPatterns();
-                patternScore += modifierScore * 0.3;
-                
-                // 3. Key location consistency
-                const locationScore = this.analyzeKeyLocationConsistency();
-                patternScore += locationScore * 0.4;
-
-                return Math.min(patternScore, 1);
-            }
-
-            analyzeRepeatTiming(repeatEvents) {
-                if (repeatEvents.length < 2) return 0;
-                
-                const intervals = [];
-                for (let i = 1; i < repeatEvents.length; i++) {
-                    if (repeatEvents[i].code === repeatEvents[i-1].code) {
-                        intervals.push(repeatEvents[i].timestamp - repeatEvents[i-1].timestamp);
-                    }
-                }
-                
-                if (intervals.length === 0) return 0;
-                
-                // Check if repeat timing is too regular (remote desktop compression)
-                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                const variance = intervals.reduce((sum, val) => sum + Math.pow(val - avgInterval, 2), 0) / intervals.length;
-                
-                return variance < 100 ? 0.8 : 0.2; // Low variance suggests artificial timing
-            }
-
-            analyzeModifierPatterns() {
-                const modifierEvents = this.keystrokeEvents.filter(e => 
-                    e.modifiers.ctrl || e.modifiers.shift || e.modifiers.alt || e.modifiers.meta
-                );
-                
-                if (modifierEvents.length === 0) return 0;
-                
-                // Analyze modifier key release timing
-                let suspiciousModifierTiming = 0;
-                modifierEvents.forEach(event => {
-                    // Remote desktops sometimes have delayed modifier release
-                    if (event.type === 'keyup' && event.timestamp > 0) {
-                        suspiciousModifierTiming++;
-                    }
-                });
-                
-                return suspiciousModifierTiming / modifierEvents.length;
-            }
-
-            analyzeKeyLocationConsistency() {
-                const locationEvents = this.keystrokeEvents.filter(e => e.location !== undefined);
-                if (locationEvents.length < 5) return 0;
-                
-                // Check for location inconsistencies that might suggest virtualization
-                const locationMap = new Map();
-                locationEvents.forEach(event => {
-                    const key = event.code;
-                    if (!locationMap.has(key)) {
-                        locationMap.set(key, []);
-                    }
-                    locationMap.get(key).push(event.location);
-                });
-                
-                let inconsistencies = 0;
-                locationMap.forEach(locations => {
-                    const uniqueLocations = new Set(locations);
-                    if (uniqueLocations.size > 1) {
-                        inconsistencies++;
-                    }
-                });
-                
-                return inconsistencies / locationMap.size;
-            }
-
-            analyzeEnvironmentSignals() {
-                let envScore = 0;
-                
-                // 1. Screen and display analysis
-                const displayScore = this.analyzeDisplayCharacteristics();
-                envScore += displayScore * 0.4;
-                
-                // 2. Hardware capability analysis
-                const hardwareScore = this.analyzeHardwareSignals();
-                envScore += hardwareScore * 0.3;
-                
-                // 3. Browser API availability
-                const apiScore = this.analyzeBrowserAPIAvailability();
-                envScore += apiScore * 0.3;
-
-                return Math.min(envScore, 1);
-            }
-
-            analyzeDisplayCharacteristics() {
-                const metrics = this.baselineMetrics;
-                let score = 0;
-                
-                // Common remote desktop resolutions
-                const commonRemoteRes = [
-                    '1920x1080', '1366x768', '1024x768', '800x600', '1280x1024', '1440x900'
-                ];
-                const currentRes = `${screen.width}x${screen.height}`;
-                if (commonRemoteRes.includes(currentRes)) score += 0.3;
-                
-                // Device pixel ratio (remote desktops often have standard ratios)
-                if (metrics.devicePixelRatio === 1) score += 0.2;
-                
-                // Available vs total screen area (remote desktop windowing)
-                const screenUtilization = metrics.availableScreenArea / metrics.totalScreenArea;
-                if (screenUtilization < 0.9) score += 0.3;
-                
-                // Color depth (remote desktops often use reduced color)
-                if (metrics.screenColorDepth < 24) score += 0.2;
-                
-                return score;
-            }
-
-            analyzeHardwareSignals() {
-                const metrics = this.baselineMetrics;
-                let score = 0;
-                
-                // Hardware concurrency (VMs often have limited cores)
-                if (metrics.hardwareConcurrency <= 2) score += 0.3;
-                
-                // Touch capabilities (most remote desktops don't support touch)
-                if (metrics.maxTouchPoints === 0 && this.deviceCapabilities.hasTouch) score += 0.2;
-                
-                // Limited plugin/mime type support
-                if (metrics.plugins < 3) score += 0.2;
-                if (metrics.mimeTypes < 10) score += 0.3;
-                
-                return score;
-            }
-
-            analyzeBrowserAPIAvailability() {
-                const caps = this.deviceCapabilities;
-                let score = 0;
-                
-                // APIs often restricted in remote environments
-                if (!caps.hasGamepad) score += 0.2;
-                if (!caps.hasVibration) score += 0.1;
-                if (!caps.hasWebRTC) score += 0.3;
-                if (!caps.hasMediaDevices) score += 0.2;
-                if (!caps.batteryAPI) score += 0.2;
-                
-                return score;
-            }
-
-            analyzeBehavioralPatterns() {
-                let behaviorScore = 0;
-                
-                // 1. Mouse-keyboard coordination
-                const coordinationScore = this.analyzeMouseKeyboardCoordination();
-                behaviorScore += coordinationScore * 0.4;
-                
-                // 2. Focus pattern analysis
-                const focusScore = this.analyzeFocusPatterns();
-                behaviorScore += focusScore * 0.3;
-                
-                // 3. Input method consistency
-                const consistencyScore = this.analyzeInputConsistency();
-                behaviorScore += consistencyScore * 0.3;
-
-                return Math.min(behaviorScore, 1);
-            }
-
-            analyzeMouseKeyboardCoordination() {
-                if (this.mouseEvents.length < 3 || this.keystrokeEvents.length < 3) return 0;
-                
-                // Look for unnatural timing between mouse and keyboard events
-                let unnaturalCoordination = 0;
-                const recentMouse = this.mouseEvents.slice(-5);
-                const recentKeys = this.keystrokeEvents.slice(-5);
-                
-                // Remote desktops sometimes have delayed mouse-keyboard synchronization
-                recentMouse.forEach(mouseEvent => {
-                    const closestKeyEvent = recentKeys.find(keyEvent => 
-                        Math.abs(keyEvent.timestamp - mouseEvent.timestamp) < 100
-                    );
-                    if (closestKeyEvent) {
-                        const timeDiff = Math.abs(keyEvent.timestamp - mouseEvent.timestamp);
-                        if (timeDiff > 50) { // Suspicious delay
-                            unnaturalCoordination++;
-                        }
-                    }
-                });
-                
-                return unnaturalCoordination / Math.min(recentMouse.length, recentKeys.length);
-            }
-
-            analyzeFocusPatterns() {
-                if (this.focusEvents.length < 2) return 0;
-                
-                // Analyze focus event timing and trust
-                const untrustedFocus = this.focusEvents.filter(e => !e.trusted).length;
-                return untrustedFocus / this.focusEvents.length;
-            }
-
-            analyzeInputConsistency() {
-                // This would be populated by captureInputEvent
-                return 0; // Placeholder for input consistency analysis
-            }
-
-            updateAdvancedDisplay() {
-                // Update timing analysis
-                document.getElementById('avgInterval').textContent = 
-                    this.keystrokeEvents.length > 1 ? 
-                    this.calculateAverageInterval().toFixed(2) + 'ms' : '-';
-                
-                document.getElementById('timingVariance').textContent = 
-                    (this.detectionScores.timing * 100).toFixed(1) + '%';
-                
-                document.getElementById('timingScore').textContent = 
-                    this.detectionScores.timing.toFixed(2);
-
-                // Update keyboard analysis
-                document.getElementById('keyCodes').textContent = 
-                    this.keystrokeEvents.slice(-5).map(e => e.keyCode).join(', ');
-                
-                document.getElementById('modifierUsage').textContent = 
-                    (this.detectionScores.pattern * 100).toFixed(1) + '%';
-                
-                document.getElementById('layoutDetection').textContent = 
-                    this.detectKeyboardLayout();
-
-                // Update browser signals
-                document.getElementById('userAgent').textContent = 
-                    navigator.userAgent.substring(0, 50) + '...';
-                
-                document.getElementById('screenResolution').textContent = 
-                    `${screen.width}x${screen.height}`;
-                
-                document.getElementById('connectionType').textContent = 
-                    (this.detectionScores.environment * 100).toFixed(1) + '% remote indicators';
-
-                // Update performance metrics
-                document.getElementById('eventLatency').textContent = 
-                    this.calculateAverageProcessingDelay().toFixed(2) + 'ms';
-                
-                document.getElementById('processingTime').textContent = 
-                    (this.detectionScores.behavior * 100).toFixed(1) + '% suspicious';
-                
-                document.getElementById('memoryUsage').textContent = 
-                    performance.memory ? 
-                    (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + ' MB' : 'N/A';
-
-                // Update overall assessment
-                this.updateOverallAssessment();
-            }
-
-            calculateAverageInterval() {
-                const keydowns = this.keystrokeEvents.filter(e => e.type === 'keydown');
-                if (keydowns.length < 2) return 0;
-                
-                let totalInterval = 0;
-                for (let i = 1; i < keydowns.length; i++) {
-                    totalInterval += keydowns[i].timestamp - keydowns[i-1].timestamp;
-                }
-                return totalInterval / (keydowns.length - 1);
-            }
-
-            calculateAverageProcessingDelay() {
-                const delays = this.keystrokeEvents.map(e => e.processingDelay);
-                return delays.length > 0 ? 
-                    delays.reduce((a, b) => a + b, 0) / delays.length : 0;
-            }
-
-            detectKeyboardLayout() {
-                // Simple layout detection based on recent key patterns
-                const recentCodes = this.keystrokeEvents
-                    .filter(e => e.type === 'keydown')
-                    .slice(-10)
-                    .map(e => e.code);
-                
-                if (recentCodes.length < 3) return 'Unknown';
-                return 'QWERTY (detected)';
-            }
-
-            updateOverallAssessment() {
-                // Calculate comprehensive confidence score
+            calculateOverallConfidence() {
                 const weights = {
-                    timing: 0.35,
-                    pattern: 0.25,
-                    environment: 0.25,
-                    behavior: 0.15
+                    frequency: 0.3,
+                    regularity: 0.25,
+                    latency: 0.3,
+                    trust: 0.15
                 };
-                
-                const overallConfidence = 
-                    this.detectionScores.timing * weights.timing +
-                    this.detectionScores.pattern * weights.pattern +
-                    this.detectionScores.environment * weights.environment +
-                    this.detectionScores.behavior * weights.behavior;
 
+                let confidence = 0;
+
+                // Frequency analysis
+                if (this.analysisResults.frequency) {
+                    const freqScore = this.analysisResults.frequencyPower || 0;
+                    // 125Hz and 64Hz are strong indicators of remote desktop
+                    if (this.analysisResults.frequency === '125Hz' || this.analysisResults.frequency === '64Hz') {
+                        confidence += freqScore * weights.frequency * 1.5;
+                    } else {
+                        confidence += freqScore * weights.frequency;
+                    }
+                }
+
+                // Regularity (high regularity suggests remote)
+                confidence += this.analysisResults.regularity * weights.regularity;
+
+                // Latency pattern
+                confidence += this.analysisResults.latencyPattern * weights.latency;
+
+                // Event trust (lower trust ratio suggests synthetic events)
+                const trustScore = this.analysisResults.trustRatio < 0.9 ? (1 - this.analysisResults.trustRatio) : 0;
+                confidence += trustScore * weights.trust;
+
+                return Math.min(confidence, 1);
+            }
+
+            updateDisplay() {
+                // Update metrics
+                document.getElementById('frequency').textContent = 
+                    this.analysisResults.frequency || 'Analyzing...';
+                
+                document.getElementById('regularity').textContent = 
+                    (this.analysisResults.regularity * 100).toFixed(1) + '%';
+                
+                document.getElementById('latency').textContent = 
+                    (this.analysisResults.latencyPattern * 100).toFixed(1) + '%';
+                
+                document.getElementById('trustRatio').textContent = 
+                    (this.analysisResults.trustRatio * 100).toFixed(1) + '%';
+
+                // Calculate and display overall confidence
+                const confidence = this.calculateOverallConfidence();
                 const confidenceFill = document.getElementById('confidenceFill');
                 const confidenceText = document.getElementById('confidenceText');
-                const statusIndicator = document.getElementById('statusIndicator');
+                const indicator = document.getElementById('indicator');
                 const statusText = document.getElementById('statusText');
 
-                confidenceFill.style.width = (overallConfidence * 100) + '%';
-                confidenceText.textContent = (overallConfidence * 100).toFixed(1) + '% confidence';
+                confidenceFill.style.width = (confidence * 100) + '%';
+                confidenceText.textContent = (confidence * 100).toFixed(1) + '% confidence';
 
-                if (this.keystrokeEvents.length < 5) {
-                    statusIndicator.textContent = '⏳';
-                    statusText.textContent = 'Collecting data...';
-                    statusIndicator.className = 'status-indicator waiting';
-                } else if (overallConfidence > 0.65) {
-                    statusIndicator.textContent = '🖥️';
+                const keystrokeCount = Math.floor(this.events.length / 2);
+                
+                if (keystrokeCount < 25) {
+                    indicator.textContent = '⏳';
+                    statusText.textContent = 'Collecting data... Keep typing';
+                    indicator.className = 'indicator waiting';
+                } else if (confidence > 0.6) {
+                    indicator.textContent = '🖥️';
                     statusText.textContent = 'Remote Desktop Detected';
-                    statusIndicator.className = 'status-indicator remote';
-                } else if (overallConfidence > 0.35) {
-                    statusIndicator.textContent = '❓';
-                    statusText.textContent = 'Mixed Signals';
-                    statusIndicator.className = 'status-indicator uncertain';
+                    indicator.className = 'indicator remote';
+                } else if (confidence > 0.3) {
+                    indicator.textContent = '❓';
+                    statusText.textContent = 'Uncertain - Mixed signals';
+                    indicator.className = 'indicator uncertain';
                 } else {
-                    statusIndicator.textContent = '💻';
+                    indicator.textContent = '💻';
                     statusText.textContent = 'Local Input Detected';
-                    statusIndicator.className = 'status-indicator local';
+                    indicator.className = 'indicator local';
                 }
-            }
-
-            startAdvancedAnalysis() {
-                // Real-time analysis every 500ms for better responsiveness
-                setInterval(() => {
-                    if (this.keystrokeEvents.length > 0) {
-                        this.performRealTimeAnalysis();
-                    }
-                }, 500);
             }
         }
 
-        // Initialize the advanced detector when the page loads
+        // Initialize detector when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new AdvancedKeystrokeDetector();
+            new RemoteDesktopDetector();
         });
     </script>
 </body>
