@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Desktop Keystroke Detector</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Remote Desktop Keystroke Detector</h1>
+            <p>Analyzing keystrokes to detect remote desktop sessions</p>
+        </header>
+
+        <div class="detection-area">
+            <div class="input-section">
+                <h2>Test Input Area</h2>
+                <textarea 
+                    id="testInput" 
+                    placeholder="Type here to test keystroke detection..."
+                    rows="6"
+                ></textarea>
+                <div class="input-instructions">
+                    <p>💡 <strong>Instructions:</strong></p>
+                    <ul>
+                        <li>Type normally in the text area above</li>
+                        <li>Try different typing speeds and patterns</li>
+                        <li>Test with various keyboard layouts</li>
+                        <li>Compare local vs remote desktop behavior</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2>Detection Results</h2>
+                <div class="result-grid">
+                    <div class="result-card" id="timingCard">
+                        <h3>⏱️ Timing Analysis</h3>
+                        <div class="metric">
+                            <span class="label">Average Interval:</span>
+                            <span class="value" id="avgInterval">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Variance:</span>
+                            <span class="value" id="timingVariance">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Pattern Score:</span>
+                            <span class="value" id="timingScore">-</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card" id="keyboardCard">
+                        <h3>⌨️ Keyboard Analysis</h3>
+                        <div class="metric">
+                            <span class="label">Key Codes:</span>
+                            <span class="value" id="keyCodes">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Modifier Usage:</span>
+                            <span class="value" id="modifierUsage">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Layout Detection:</span>
+                            <span class="value" id="layoutDetection">-</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card" id="browserCard">
+                        <h3>🌐 Browser Signals</h3>
+                        <div class="metric">
+                            <span class="label">User Agent:</span>
+                            <span class="value" id="userAgent">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Screen Resolution:</span>
+                            <span class="value" id="screenResolution">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Connection Type:</span>
+                            <span class="value" id="connectionType">-</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card" id="performanceCard">
+                        <h3>⚡ Performance Metrics</h3>
+                        <div class="metric">
+                            <span class="label">Event Latency:</span>
+                            <span class="value" id="eventLatency">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Processing Time:</span>
+                            <span class="value" id="processingTime">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Memory Usage:</span>
+                            <span class="value" id="memoryUsage">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overall-result">
+                    <h3>🎯 Overall Assessment</h3>
+                    <div class="assessment" id="overallAssessment">
+                        <div class="confidence-meter">
+                            <div class="meter-bar">
+                                <div class="meter-fill" id="confidenceFill"></div>
+                            </div>
+                            <span class="confidence-text" id="confidenceText">No data yet</span>
+                        </div>
+                        <div class="detection-status" id="detectionStatus">
+                            <span class="status-indicator" id="statusIndicator">⏳</span>
+                            <span class="status-text" id="statusText">Waiting for input...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📊 Detection Methodology</h2>
+            <div class="methodology-grid">
+                <div class="methodology-item">
+                    <h4>⏱️ Timing Patterns</h4>
+                    <p>Analyzes intervals between keystrokes. Remote sessions often have more consistent timing due to network buffering.</p>
+                </div>
+                <div class="methodology-item">
+                    <h4>⌨️ Keyboard Signals</h4>
+                    <p>Examines key codes, modifier usage, and layout patterns that may differ in remote environments.</p>
+                </div>
+                <div class="methodology-item">
+                    <h4>🌐 Browser Fingerprinting</h4>
+                    <p>Checks user agent, screen properties, and connection characteristics typical of remote sessions.</p>
+                </div>
+                <div class="methodology-item">
+                    <h4>⚡ Performance Analysis</h4>
+                    <p>Measures event processing latency and memory usage patterns that can indicate remote processing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class KeystrokeDetector {
+            constructor() {
+                this.keystrokeHistory = [];
+                this.lastKeystrokeTime = 0;
+                this.analysisResults = {
+                    timing: {},
+                    keyboard: {},
+                    browser: {},
+                    performance: {}
+                };
+                
+                this.initializeDetection();
+                this.setupEventListeners();
+                this.startPeriodicAnalysis();
+            }
+
+            initializeDetection() {
+                // Initialize browser signals
+                this.analyzeBrowserSignals();
+                
+                // Initialize performance monitoring
+                this.initializePerformanceMonitoring();
+            }
+
+            setupEventListeners() {
+                const testInput = document.getElementById('testInput');
+                
+                testInput.addEventListener('keydown', (e) => {
+                    this.handleKeystroke(e, 'keydown');
+                });
+
+                testInput.addEventListener('keyup', (e) => {
+                    this.handleKeystroke(e, 'keyup');
+                });
+
+                testInput.addEventListener('input', (e) => {
+                    this.handleInput(e);
+                });
+            }
+
+            handleKeystroke(event, type) {
+                const currentTime = performance.now();
+                const interval = this.lastKeystrokeTime ? currentTime - this.lastKeystrokeTime : 0;
+                
+                const keystrokeData = {
+                    timestamp: currentTime,
+                    interval: interval,
+                    type: type,
+                    key: event.key,
+                    keyCode: event.keyCode,
+                    code: event.code,
+                    location: event.location,
+                    ctrlKey: event.ctrlKey,
+                    shiftKey: event.shiftKey,
+                    altKey: event.altKey,
+                    metaKey: event.metaKey,
+                    repeat: event.repeat,
+                    isComposing: event.isComposing,
+                    eventLatency: this.measureEventLatency(event)
+                };
+
+                this.keystrokeHistory.push(keystrokeData);
+                this.lastKeystrokeTime = currentTime;
+
+                // Keep only last 100 keystrokes for analysis
+                if (this.keystrokeHistory.length > 100) {
+                    this.keystrokeHistory.shift();
+                }
+
+                this.updateDisplay();
+            }
+
+            handleInput(event) {
+                // Additional input analysis
+                this.analyzeInputPatterns(event);
+            }
+
+            measureEventLatency(event) {
+                // Measure how long it takes to process the event
+                const start = performance.now();
+                // Simulate some processing
+                setTimeout(() => {
+                    const latency = performance.now() - start;
+                    this.analysisResults.performance.eventLatency = latency;
+                }, 0);
+                return performance.now();
+            }
+
+            analyzeTimingPatterns() {
+                if (this.keystrokeHistory.length < 5) return {};
+
+                const intervals = this.keystrokeHistory
+                    .filter(k => k.interval > 0)
+                    .map(k => k.interval);
+
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const variance = this.calculateVariance(intervals, avgInterval);
+                const consistency = this.calculateConsistency(intervals);
+
+                return {
+                    avgInterval: avgInterval.toFixed(2),
+                    variance: variance.toFixed(2),
+                    consistency: consistency.toFixed(2),
+                    patternScore: this.calculateTimingScore(avgInterval, variance, consistency)
+                };
+            }
+
+            analyzeKeyboardPatterns() {
+                if (this.keystrokeHistory.length === 0) return {};
+
+                const keyCodes = this.keystrokeHistory.map(k => k.keyCode);
+                const modifierUsage = this.keystrokeHistory.filter(k => 
+                    k.ctrlKey || k.shiftKey || k.altKey || k.metaKey
+                ).length / this.keystrokeHistory.length;
+
+                const layoutPatterns = this.analyzeLayoutPatterns();
+                const keyCodeVariance = this.calculateVariance(keyCodes, 
+                    keyCodes.reduce((a, b) => a + b, 0) / keyCodes.length
+                );
+
+                return {
+                    keyCodes: keyCodes.slice(-10).join(', '),
+                    modifierUsage: (modifierUsage * 100).toFixed(1) + '%',
+                    layoutDetection: layoutPatterns,
+                    keyCodeVariance: keyCodeVariance.toFixed(2)
+                };
+            }
+
+            analyzeBrowserSignals() {
+                const userAgent = navigator.userAgent;
+                const screenRes = `${screen.width}x${screen.height}`;
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const connectionType = connection ? connection.effectiveType || 'unknown' : 'unknown';
+
+                // Remote desktop indicators
+                const remoteIndicators = {
+                    userAgent: this.analyzeUserAgent(userAgent),
+                    screenResolution: this.analyzeScreenResolution(screen.width, screen.height),
+                    connectionType: connectionType,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    language: navigator.language,
+                    platform: navigator.platform
+                };
+
+                this.analysisResults.browser = remoteIndicators;
+                return remoteIndicators;
+            }
+
+            analyzeUserAgent(userAgent) {
+                const remotePatterns = [
+                    /remote/i, /rdp/i, /vnc/i, /citrix/i, /teamviewer/i,
+                    /vmware/i, /virtualbox/i, /parallels/i
+                ];
+                
+                const isRemote = remotePatterns.some(pattern => pattern.test(userAgent));
+                return {
+                    userAgent: userAgent.substring(0, 50) + '...',
+                    remoteIndicators: isRemote ? 'Detected' : 'None found',
+                    confidence: isRemote ? 'High' : 'Low'
+                };
+            }
+
+            analyzeScreenResolution(width, height) {
+                // Remote desktops often have specific resolution patterns
+                const commonRemoteResolutions = [
+                    [1920, 1080], [1366, 768], [1024, 768], [800, 600]
+                ];
+                
+                const isCommonRemote = commonRemoteResolutions.some(([w, h]) => 
+                    width === w && height === h
+                );
+
+                return {
+                    resolution: `${width}x${height}`,
+                    isCommonRemote: isCommonRemote,
+                    aspectRatio: (width / height).toFixed(2)
+                };
+            }
+
+            analyzeLayoutPatterns() {
+                const keyCodes = this.keystrokeHistory.map(k => k.keyCode);
+                const commonPatterns = {
+                    qwerty: [81, 87, 69, 82, 84, 89, 85, 73, 79, 80],
+                    azerty: [65, 90, 69, 82, 84, 89, 85, 73, 79, 80],
+                    qwertz: [81, 87, 69, 82, 84, 90, 85, 73, 79, 80]
+                };
+
+                let bestMatch = 'unknown';
+                let bestScore = 0;
+
+                for (const [layout, pattern] of Object.entries(commonPatterns)) {
+                    const score = this.calculatePatternMatch(keyCodes, pattern);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = layout;
+                    }
+                }
+
+                return {
+                    detectedLayout: bestMatch,
+                    confidence: (bestScore * 100).toFixed(1) + '%',
+                    keyCount: keyCodes.length
+                };
+            }
+
+            calculatePatternMatch(keyCodes, pattern) {
+                if (keyCodes.length < pattern.length) return 0;
+                
+                let matches = 0;
+                for (let i = 0; i < Math.min(keyCodes.length, pattern.length); i++) {
+                    if (keyCodes[i] === pattern[i]) matches++;
+                }
+                
+                return matches / pattern.length;
+            }
+
+            initializePerformanceMonitoring() {
+                if ('memory' in performance) {
+                    setInterval(() => {
+                        this.analysisResults.performance.memoryUsage = 
+                            (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + ' MB';
+                    }, 1000);
+                }
+            }
+
+            calculateVariance(values, mean) {
+                const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+                return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+            }
+
+            calculateConsistency(intervals) {
+                if (intervals.length < 2) return 0;
+                
+                const sorted = [...intervals].sort((a, b) => a - b);
+                const median = sorted[Math.floor(sorted.length / 2)];
+                const deviations = intervals.map(interval => Math.abs(interval - median));
+                const avgDeviation = deviations.reduce((a, b) => a + b, 0) / deviations.length;
+                
+                return 1 / (1 + avgDeviation); // Higher consistency = higher score
+            }
+
+            calculateTimingScore(avgInterval, variance, consistency) {
+                // Remote sessions typically have more consistent timing
+                const consistencyWeight = 0.6;
+                const varianceWeight = 0.3;
+                const intervalWeight = 0.1;
+                
+                const normalizedConsistency = Math.min(consistency * 10, 1);
+                const normalizedVariance = Math.max(0, 1 - (variance / 1000));
+                const normalizedInterval = Math.max(0, 1 - (avgInterval / 1000));
+                
+                return (normalizedConsistency * consistencyWeight + 
+                        normalizedVariance * varianceWeight + 
+                        normalizedInterval * intervalWeight).toFixed(2);
+            }
+
+            calculateOverallConfidence() {
+                const timingScore = parseFloat(this.analysisResults.timing.patternScore || 0);
+                const browserScore = this.analysisResults.browser.userAgent?.confidence === 'High' ? 0.8 : 0.2;
+                const keyboardScore = parseFloat(this.analysisResults.keyboard.layoutDetection?.confidence || 0) / 100;
+                
+                const weights = { timing: 0.4, browser: 0.3, keyboard: 0.3 };
+                const overallScore = (timingScore * weights.timing + 
+                                    browserScore * weights.browser + 
+                                    keyboardScore * weights.keyboard);
+                
+                return Math.min(overallScore, 1);
+            }
+
+            updateDisplay() {
+                // Update timing analysis
+                this.analysisResults.timing = this.analyzeTimingPatterns();
+                if (this.analysisResults.timing.avgInterval) {
+                    document.getElementById('avgInterval').textContent = this.analysisResults.timing.avgInterval + 'ms';
+                    document.getElementById('timingVariance').textContent = this.analysisResults.timing.variance;
+                    document.getElementById('timingScore').textContent = this.analysisResults.timing.patternScore;
+                }
+
+                // Update keyboard analysis
+                this.analysisResults.keyboard = this.analyzeKeyboardPatterns();
+                if (this.analysisResults.keyboard.keyCodes) {
+                    document.getElementById('keyCodes').textContent = this.analysisResults.keyboard.keyCodes;
+                    document.getElementById('modifierUsage').textContent = this.analysisResults.keyboard.modifierUsage;
+                    document.getElementById('layoutDetection').textContent = 
+                        this.analysisResults.keyboard.layoutDetection?.detectedLayout || 'Unknown';
+                }
+
+                // Update browser signals
+                const browserSignals = this.analysisResults.browser;
+                if (browserSignals.userAgent) {
+                    document.getElementById('userAgent').textContent = browserSignals.userAgent.userAgent;
+                    document.getElementById('screenResolution').textContent = 
+                        browserSignals.screenResolution?.resolution || 'Unknown';
+                    document.getElementById('connectionType').textContent = 
+                        browserSignals.connectionType || 'Unknown';
+                }
+
+                // Update performance metrics
+                if (this.analysisResults.performance.memoryUsage) {
+                    document.getElementById('memoryUsage').textContent = this.analysisResults.performance.memoryUsage;
+                }
+
+                // Update overall assessment
+                this.updateOverallAssessment();
+            }
+
+            updateOverallAssessment() {
+                const confidence = this.calculateOverallConfidence();
+                const confidenceFill = document.getElementById('confidenceFill');
+                const confidenceText = document.getElementById('confidenceText');
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+
+                confidenceFill.style.width = (confidence * 100) + '%';
+                confidenceText.textContent = (confidence * 100).toFixed(1) + '% confidence';
+
+                if (this.keystrokeHistory.length < 5) {
+                    statusIndicator.textContent = '⏳';
+                    statusText.textContent = 'Need more keystrokes...';
+                    statusIndicator.className = 'status-indicator waiting';
+                } else if (confidence > 0.7) {
+                    statusIndicator.textContent = '🖥️';
+                    statusText.textContent = 'Likely Remote Desktop';
+                    statusIndicator.className = 'status-indicator remote';
+                } else if (confidence > 0.4) {
+                    statusIndicator.textContent = '❓';
+                    statusText.textContent = 'Uncertain - Mixed signals';
+                    statusIndicator.className = 'status-indicator uncertain';
+                } else {
+                    statusIndicator.textContent = '💻';
+                    statusText.textContent = 'Likely Local Input';
+                    statusIndicator.className = 'status-indicator local';
+                }
+            }
+
+            startPeriodicAnalysis() {
+                setInterval(() => {
+                    if (this.keystrokeHistory.length > 0) {
+                        this.updateDisplay();
+                    }
+                }, 1000);
+            }
+        }
+
+        // Initialize the detector when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new KeystrokeDetector();
+        });
+    </script>
+</body>
+</html> 
