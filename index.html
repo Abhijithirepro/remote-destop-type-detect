@@ -142,353 +142,670 @@
     </div>
 
     <script>
-        class KeystrokeDetector {
+        class AdvancedKeystrokeDetector {
             constructor() {
-                this.keystrokeHistory = [];
-                this.lastKeystrokeTime = 0;
-                this.analysisResults = {
-                    timing: {},
-                    keyboard: {},
-                    browser: {},
-                    performance: {}
+                this.keystrokeEvents = [];
+                this.mouseEvents = [];
+                this.touchEvents = [];
+                this.focusEvents = [];
+                this.baselineMetrics = null;
+                this.detectionScores = {
+                    timing: 0,
+                    pattern: 0,
+                    environment: 0,
+                    behavior: 0
                 };
                 
-                this.initializeDetection();
-                this.setupEventListeners();
-                this.startPeriodicAnalysis();
+                this.initializeAdvancedDetection();
+                this.setupComprehensiveListeners();
+                this.startAdvancedAnalysis();
             }
 
-            initializeDetection() {
-                // Initialize browser signals
-                this.analyzeBrowserSignals();
+            initializeAdvancedDetection() {
+                // Capture baseline environment metrics
+                this.captureEnvironmentBaseline();
                 
-                // Initialize performance monitoring
-                this.initializePerformanceMonitoring();
+                // Initialize high-precision timing
+                this.initializeHighPrecisionTiming();
+                
+                // Setup device capability detection
+                this.detectDeviceCapabilities();
             }
 
-            setupEventListeners() {
+            captureEnvironmentBaseline() {
+                this.baselineMetrics = {
+                    devicePixelRatio: window.devicePixelRatio,
+                    screenColorDepth: screen.colorDepth,
+                    availableScreenArea: screen.availWidth * screen.availHeight,
+                    totalScreenArea: screen.width * screen.height,
+                    hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                    maxTouchPoints: navigator.maxTouchPoints || 0,
+                    cookieEnabled: navigator.cookieEnabled,
+                    onLine: navigator.onLine,
+                    doNotTrack: navigator.doNotTrack,
+                    webdriver: navigator.webdriver,
+                    languages: navigator.languages?.length || 0,
+                    plugins: navigator.plugins?.length || 0,
+                    mimeTypes: navigator.mimeTypes?.length || 0
+                };
+            }
+
+            initializeHighPrecisionTiming() {
+                this.performanceBaseline = {
+                    initialTime: performance.now(),
+                    timeOrigin: performance.timeOrigin,
+                    navigationStart: performance.timing?.navigationStart || 0
+                };
+            }
+
+            detectDeviceCapabilities() {
+                this.deviceCapabilities = {
+                    hasTouch: 'ontouchstart' in window,
+                    hasPointer: 'onpointerdown' in window,
+                    hasGamepad: 'getGamepads' in navigator,
+                    hasVibration: 'vibrate' in navigator,
+                    hasWebGL: this.detectWebGL(),
+                    hasWebRTC: this.detectWebRTC(),
+                    hasMediaDevices: 'mediaDevices' in navigator,
+                    batteryAPI: 'getBattery' in navigator
+                };
+            }
+
+            detectWebGL() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            detectWebRTC() {
+                return !!(window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection);
+            }
+
+            setupComprehensiveListeners() {
                 const testInput = document.getElementById('testInput');
                 
-                testInput.addEventListener('keydown', (e) => {
-                    this.handleKeystroke(e, 'keydown');
+                // Comprehensive keyboard event capture
+                ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+                    testInput.addEventListener(eventType, (e) => {
+                        this.captureKeystrokeEvent(e, eventType);
+                    }, { passive: false, capture: true });
                 });
 
-                testInput.addEventListener('keyup', (e) => {
-                    this.handleKeystroke(e, 'keyup');
+                // Mouse and pointer events
+                ['mousedown', 'mouseup', 'mousemove', 'click'].forEach(eventType => {
+                    testInput.addEventListener(eventType, (e) => {
+                        this.captureMouseEvent(e, eventType);
+                    }, { passive: false });
                 });
 
+                // Touch events for mobile/tablet detection
+                if (this.deviceCapabilities.hasTouch) {
+                    ['touchstart', 'touchend', 'touchmove'].forEach(eventType => {
+                        testInput.addEventListener(eventType, (e) => {
+                            this.captureTouchEvent(e, eventType);
+                        }, { passive: false });
+                    });
+                }
+
+                // Focus and composition events
+                ['focus', 'blur', 'compositionstart', 'compositionend'].forEach(eventType => {
+                    testInput.addEventListener(eventType, (e) => {
+                        this.captureFocusEvent(e, eventType);
+                    });
+                });
+
+                // Advanced input event
                 testInput.addEventListener('input', (e) => {
-                    this.handleInput(e);
-                });
+                    this.captureInputEvent(e);
+                }, { passive: false });
             }
 
-            handleKeystroke(event, type) {
-                const currentTime = performance.now();
-                const interval = this.lastKeystrokeTime ? currentTime - this.lastKeystrokeTime : 0;
-                
-                const keystrokeData = {
-                    timestamp: currentTime,
-                    interval: interval,
-                    type: type,
+            captureKeystrokeEvent(event, eventType) {
+                const highPrecisionTime = performance.now();
+                const eventData = {
+                    timestamp: highPrecisionTime,
+                    type: eventType,
                     key: event.key,
-                    keyCode: event.keyCode,
                     code: event.code,
+                    keyCode: event.keyCode,
+                    which: event.which,
                     location: event.location,
-                    ctrlKey: event.ctrlKey,
-                    shiftKey: event.shiftKey,
-                    altKey: event.altKey,
-                    metaKey: event.metaKey,
                     repeat: event.repeat,
                     isComposing: event.isComposing,
-                    eventLatency: this.measureEventLatency(event)
+                    modifiers: {
+                        ctrl: event.ctrlKey,
+                        shift: event.shiftKey,
+                        alt: event.altKey,
+                        meta: event.metaKey
+                    },
+                    trusted: event.isTrusted,
+                    detail: event.detail,
+                    eventPhase: event.eventPhase,
+                    bubbles: event.bubbles,
+                    cancelable: event.cancelable,
+                    timeStamp: event.timeStamp,
+                    view: event.view ? 'Window' : 'null',
+                    processingDelay: this.measureProcessingDelay(event)
                 };
 
-                this.keystrokeHistory.push(keystrokeData);
-                this.lastKeystrokeTime = currentTime;
-
-                // Keep only last 100 keystrokes for analysis
-                if (this.keystrokeHistory.length > 100) {
-                    this.keystrokeHistory.shift();
+                this.keystrokeEvents.push(eventData);
+                
+                // Keep last 50 events for analysis
+                if (this.keystrokeEvents.length > 50) {
+                    this.keystrokeEvents.shift();
                 }
 
-                this.updateDisplay();
+                this.performRealTimeAnalysis();
             }
 
-            handleInput(event) {
-                // Additional input analysis
-                this.analyzeInputPatterns(event);
+            captureMouseEvent(event, eventType) {
+                this.mouseEvents.push({
+                    timestamp: performance.now(),
+                    type: eventType,
+                    x: event.clientX,
+                    y: event.clientY,
+                    button: event.button,
+                    buttons: event.buttons,
+                    trusted: event.isTrusted,
+                    detail: event.detail
+                });
+
+                if (this.mouseEvents.length > 20) {
+                    this.mouseEvents.shift();
+                }
             }
 
-            measureEventLatency(event) {
-                // Measure how long it takes to process the event
-                const start = performance.now();
-                // Simulate some processing
-                setTimeout(() => {
-                    const latency = performance.now() - start;
-                    this.analysisResults.performance.eventLatency = latency;
-                }, 0);
-                return performance.now();
+            captureTouchEvent(event, eventType) {
+                this.touchEvents.push({
+                    timestamp: performance.now(),
+                    type: eventType,
+                    touchCount: event.touches.length,
+                    trusted: event.isTrusted
+                });
+
+                if (this.touchEvents.length > 20) {
+                    this.touchEvents.shift();
+                }
             }
 
-            analyzeTimingPatterns() {
-                if (this.keystrokeHistory.length < 5) return {};
+            captureFocusEvent(event, eventType) {
+                this.focusEvents.push({
+                    timestamp: performance.now(),
+                    type: eventType,
+                    trusted: event.isTrusted
+                });
 
-                const intervals = this.keystrokeHistory
-                    .filter(k => k.interval > 0)
-                    .map(k => k.interval);
+                if (this.focusEvents.length > 10) {
+                    this.focusEvents.shift();
+                }
+            }
 
+            captureInputEvent(event) {
+                // Input event specific analysis
+                const inputData = {
+                    timestamp: performance.now(),
+                    inputType: event.inputType,
+                    data: event.data,
+                    isComposing: event.isComposing,
+                    trusted: event.isTrusted
+                };
+                
+                this.analyzeInputConsistency(inputData);
+            }
+
+            measureProcessingDelay(event) {
+                const startTime = performance.now();
+                // Minimal processing to measure baseline delay
+                const delay = performance.now() - startTime;
+                return delay;
+            }
+
+            performRealTimeAnalysis() {
+                if (this.keystrokeEvents.length < 3) return;
+
+                // 1. Advanced Timing Analysis
+                this.detectionScores.timing = this.analyzeAdvancedTiming();
+                
+                // 2. Pattern Recognition
+                this.detectionScores.pattern = this.analyzeKeystrokePatterns();
+                
+                // 3. Environment Analysis
+                this.detectionScores.environment = this.analyzeEnvironmentSignals();
+                
+                // 4. Behavioral Analysis
+                this.detectionScores.behavior = this.analyzeBehavioralPatterns();
+
+                this.updateAdvancedDisplay();
+            }
+
+            analyzeAdvancedTiming() {
+                const keydowns = this.keystrokeEvents.filter(e => e.type === 'keydown');
+                if (keydowns.length < 3) return 0;
+
+                // Calculate inter-keystroke intervals
+                const intervals = [];
+                for (let i = 1; i < keydowns.length; i++) {
+                    intervals.push(keydowns[i].timestamp - keydowns[i-1].timestamp);
+                }
+
+                // Statistical analysis
+                const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const variance = intervals.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / intervals.length;
+                const stdDev = Math.sqrt(variance);
+                const coefficientOfVariation = stdDev / mean;
+
+                // Timing regularity analysis (remote desktop indicator)
+                const regularityScore = this.calculateTimingRegularity(intervals);
+                
+                // Network latency patterns
+                const latencyScore = this.analyzeLatencyPatterns(intervals);
+                
+                // Event trust analysis
+                const trustScore = this.analyzeEventTrust();
+
+                // Composite timing score (higher = more likely remote)
+                let timingScore = 0;
+                
+                // Remote desktops often have more regular timing
+                if (coefficientOfVariation < 0.3) timingScore += 0.3;
+                if (regularityScore > 0.7) timingScore += 0.25;
+                if (latencyScore > 0.6) timingScore += 0.25;
+                if (trustScore < 0.8) timingScore += 0.2;
+
+                return Math.min(timingScore, 1);
+            }
+
+            calculateTimingRegularity(intervals) {
+                if (intervals.length < 5) return 0;
+                
+                // Look for patterns that suggest buffering/compression
+                const sortedIntervals = [...intervals].sort((a, b) => a - b);
+                const median = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+                
+                // Count intervals close to common network timing multiples
+                const networkTimings = [16.67, 33.33, 50, 100]; // Common refresh/network intervals
+                let networkMatches = 0;
+                
+                intervals.forEach(interval => {
+                    if (networkTimings.some(timing => Math.abs(interval - timing) < 5)) {
+                        networkMatches++;
+                    }
+                });
+                
+                return networkMatches / intervals.length;
+            }
+
+            analyzeLatencyPatterns(intervals) {
+                // Look for minimum latencies that suggest network overhead
+                const minInterval = Math.min(...intervals);
                 const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                const variance = this.calculateVariance(intervals, avgInterval);
-                const consistency = this.calculateConsistency(intervals);
-
-                return {
-                    avgInterval: avgInterval.toFixed(2),
-                    variance: variance.toFixed(2),
-                    consistency: consistency.toFixed(2),
-                    patternScore: this.calculateTimingScore(avgInterval, variance, consistency)
-                };
-            }
-
-            analyzeKeyboardPatterns() {
-                if (this.keystrokeHistory.length === 0) return {};
-
-                const keyCodes = this.keystrokeHistory.map(k => k.keyCode);
-                const modifierUsage = this.keystrokeHistory.filter(k => 
-                    k.ctrlKey || k.shiftKey || k.altKey || k.metaKey
-                ).length / this.keystrokeHistory.length;
-
-                const layoutPatterns = this.analyzeLayoutPatterns();
-                const keyCodeVariance = this.calculateVariance(keyCodes, 
-                    keyCodes.reduce((a, b) => a + b, 0) / keyCodes.length
-                );
-
-                return {
-                    keyCodes: keyCodes.slice(-10).join(', '),
-                    modifierUsage: (modifierUsage * 100).toFixed(1) + '%',
-                    layoutDetection: layoutPatterns,
-                    keyCodeVariance: keyCodeVariance.toFixed(2)
-                };
-            }
-
-            analyzeBrowserSignals() {
-                const userAgent = navigator.userAgent;
-                const screenRes = `${screen.width}x${screen.height}`;
-                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                const connectionType = connection ? connection.effectiveType || 'unknown' : 'unknown';
-
-                // Remote desktop indicators
-                const remoteIndicators = {
-                    userAgent: this.analyzeUserAgent(userAgent),
-                    screenResolution: this.analyzeScreenResolution(screen.width, screen.height),
-                    connectionType: connectionType,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    language: navigator.language,
-                    platform: navigator.platform
-                };
-
-                this.analysisResults.browser = remoteIndicators;
-                return remoteIndicators;
-            }
-
-            analyzeUserAgent(userAgent) {
-                const remotePatterns = [
-                    /remote/i, /rdp/i, /vnc/i, /citrix/i, /teamviewer/i,
-                    /vmware/i, /virtualbox/i, /parallels/i
-                ];
                 
-                const isRemote = remotePatterns.some(pattern => pattern.test(userAgent));
-                return {
-                    userAgent: userAgent.substring(0, 50) + '...',
-                    remoteIndicators: isRemote ? 'Detected' : 'None found',
-                    confidence: isRemote ? 'High' : 'Low'
-                };
+                // Remote sessions rarely have sub-10ms intervals
+                if (minInterval > 10 && avgInterval > 30) {
+                    return 0.8;
+                } else if (minInterval > 5 && avgInterval > 20) {
+                    return 0.5;
+                }
+                return 0.2;
             }
 
-            analyzeScreenResolution(width, height) {
-                // Remote desktops often have specific resolution patterns
-                const commonRemoteResolutions = [
-                    [1920, 1080], [1366, 768], [1024, 768], [800, 600]
-                ];
+            analyzeEventTrust() {
+                const totalEvents = this.keystrokeEvents.length;
+                const trustedEvents = this.keystrokeEvents.filter(e => e.trusted).length;
+                return trustedEvents / totalEvents;
+            }
+
+            analyzeKeystrokePatterns() {
+                // Key sequence analysis
+                const keySequence = this.keystrokeEvents
+                    .filter(e => e.type === 'keydown')
+                    .map(e => e.code);
                 
-                const isCommonRemote = commonRemoteResolutions.some(([w, h]) => 
-                    width === w && height === h
-                );
+                // Look for unusual patterns
+                let patternScore = 0;
+                
+                // 1. Repeated key detection (auto-repeat handling differences)
+                const repeatEvents = this.keystrokeEvents.filter(e => e.repeat);
+                if (repeatEvents.length > 0) {
+                    const repeatTiming = this.analyzeRepeatTiming(repeatEvents);
+                    if (repeatTiming > 0.7) patternScore += 0.3;
+                }
+                
+                // 2. Modifier key analysis
+                const modifierScore = this.analyzeModifierPatterns();
+                patternScore += modifierScore * 0.3;
+                
+                // 3. Key location consistency
+                const locationScore = this.analyzeKeyLocationConsistency();
+                patternScore += locationScore * 0.4;
 
-                return {
-                    resolution: `${width}x${height}`,
-                    isCommonRemote: isCommonRemote,
-                    aspectRatio: (width / height).toFixed(2)
-                };
+                return Math.min(patternScore, 1);
             }
 
-            analyzeLayoutPatterns() {
-                const keyCodes = this.keystrokeHistory.map(k => k.keyCode);
-                const commonPatterns = {
-                    qwerty: [81, 87, 69, 82, 84, 89, 85, 73, 79, 80],
-                    azerty: [65, 90, 69, 82, 84, 89, 85, 73, 79, 80],
-                    qwertz: [81, 87, 69, 82, 84, 90, 85, 73, 79, 80]
-                };
-
-                let bestMatch = 'unknown';
-                let bestScore = 0;
-
-                for (const [layout, pattern] of Object.entries(commonPatterns)) {
-                    const score = this.calculatePatternMatch(keyCodes, pattern);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = layout;
+            analyzeRepeatTiming(repeatEvents) {
+                if (repeatEvents.length < 2) return 0;
+                
+                const intervals = [];
+                for (let i = 1; i < repeatEvents.length; i++) {
+                    if (repeatEvents[i].code === repeatEvents[i-1].code) {
+                        intervals.push(repeatEvents[i].timestamp - repeatEvents[i-1].timestamp);
                     }
                 }
-
-                return {
-                    detectedLayout: bestMatch,
-                    confidence: (bestScore * 100).toFixed(1) + '%',
-                    keyCount: keyCodes.length
-                };
+                
+                if (intervals.length === 0) return 0;
+                
+                // Check if repeat timing is too regular (remote desktop compression)
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const variance = intervals.reduce((sum, val) => sum + Math.pow(val - avgInterval, 2), 0) / intervals.length;
+                
+                return variance < 100 ? 0.8 : 0.2; // Low variance suggests artificial timing
             }
 
-            calculatePatternMatch(keyCodes, pattern) {
-                if (keyCodes.length < pattern.length) return 0;
+            analyzeModifierPatterns() {
+                const modifierEvents = this.keystrokeEvents.filter(e => 
+                    e.modifiers.ctrl || e.modifiers.shift || e.modifiers.alt || e.modifiers.meta
+                );
                 
-                let matches = 0;
-                for (let i = 0; i < Math.min(keyCodes.length, pattern.length); i++) {
-                    if (keyCodes[i] === pattern[i]) matches++;
-                }
+                if (modifierEvents.length === 0) return 0;
                 
-                return matches / pattern.length;
+                // Analyze modifier key release timing
+                let suspiciousModifierTiming = 0;
+                modifierEvents.forEach(event => {
+                    // Remote desktops sometimes have delayed modifier release
+                    if (event.type === 'keyup' && event.timestamp > 0) {
+                        suspiciousModifierTiming++;
+                    }
+                });
+                
+                return suspiciousModifierTiming / modifierEvents.length;
             }
 
-            initializePerformanceMonitoring() {
-                if ('memory' in performance) {
-                    setInterval(() => {
-                        this.analysisResults.performance.memoryUsage = 
-                            (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + ' MB';
-                    }, 1000);
-                }
+            analyzeKeyLocationConsistency() {
+                const locationEvents = this.keystrokeEvents.filter(e => e.location !== undefined);
+                if (locationEvents.length < 5) return 0;
+                
+                // Check for location inconsistencies that might suggest virtualization
+                const locationMap = new Map();
+                locationEvents.forEach(event => {
+                    const key = event.code;
+                    if (!locationMap.has(key)) {
+                        locationMap.set(key, []);
+                    }
+                    locationMap.get(key).push(event.location);
+                });
+                
+                let inconsistencies = 0;
+                locationMap.forEach(locations => {
+                    const uniqueLocations = new Set(locations);
+                    if (uniqueLocations.size > 1) {
+                        inconsistencies++;
+                    }
+                });
+                
+                return inconsistencies / locationMap.size;
             }
 
-            calculateVariance(values, mean) {
-                const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
-                return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+            analyzeEnvironmentSignals() {
+                let envScore = 0;
+                
+                // 1. Screen and display analysis
+                const displayScore = this.analyzeDisplayCharacteristics();
+                envScore += displayScore * 0.4;
+                
+                // 2. Hardware capability analysis
+                const hardwareScore = this.analyzeHardwareSignals();
+                envScore += hardwareScore * 0.3;
+                
+                // 3. Browser API availability
+                const apiScore = this.analyzeBrowserAPIAvailability();
+                envScore += apiScore * 0.3;
+
+                return Math.min(envScore, 1);
             }
 
-            calculateConsistency(intervals) {
-                if (intervals.length < 2) return 0;
+            analyzeDisplayCharacteristics() {
+                const metrics = this.baselineMetrics;
+                let score = 0;
                 
-                const sorted = [...intervals].sort((a, b) => a - b);
-                const median = sorted[Math.floor(sorted.length / 2)];
-                const deviations = intervals.map(interval => Math.abs(interval - median));
-                const avgDeviation = deviations.reduce((a, b) => a + b, 0) / deviations.length;
+                // Common remote desktop resolutions
+                const commonRemoteRes = [
+                    '1920x1080', '1366x768', '1024x768', '800x600', '1280x1024', '1440x900'
+                ];
+                const currentRes = `${screen.width}x${screen.height}`;
+                if (commonRemoteRes.includes(currentRes)) score += 0.3;
                 
-                return 1 / (1 + avgDeviation); // Higher consistency = higher score
+                // Device pixel ratio (remote desktops often have standard ratios)
+                if (metrics.devicePixelRatio === 1) score += 0.2;
+                
+                // Available vs total screen area (remote desktop windowing)
+                const screenUtilization = metrics.availableScreenArea / metrics.totalScreenArea;
+                if (screenUtilization < 0.9) score += 0.3;
+                
+                // Color depth (remote desktops often use reduced color)
+                if (metrics.screenColorDepth < 24) score += 0.2;
+                
+                return score;
             }
 
-            calculateTimingScore(avgInterval, variance, consistency) {
-                // Remote sessions typically have more consistent timing
-                const consistencyWeight = 0.6;
-                const varianceWeight = 0.3;
-                const intervalWeight = 0.1;
+            analyzeHardwareSignals() {
+                const metrics = this.baselineMetrics;
+                let score = 0;
                 
-                const normalizedConsistency = Math.min(consistency * 10, 1);
-                const normalizedVariance = Math.max(0, 1 - (variance / 1000));
-                const normalizedInterval = Math.max(0, 1 - (avgInterval / 1000));
+                // Hardware concurrency (VMs often have limited cores)
+                if (metrics.hardwareConcurrency <= 2) score += 0.3;
                 
-                return (normalizedConsistency * consistencyWeight + 
-                        normalizedVariance * varianceWeight + 
-                        normalizedInterval * intervalWeight).toFixed(2);
+                // Touch capabilities (most remote desktops don't support touch)
+                if (metrics.maxTouchPoints === 0 && this.deviceCapabilities.hasTouch) score += 0.2;
+                
+                // Limited plugin/mime type support
+                if (metrics.plugins < 3) score += 0.2;
+                if (metrics.mimeTypes < 10) score += 0.3;
+                
+                return score;
             }
 
-            calculateOverallConfidence() {
-                const timingScore = parseFloat(this.analysisResults.timing.patternScore || 0);
-                const browserScore = this.analysisResults.browser.userAgent?.confidence === 'High' ? 0.8 : 0.2;
-                const keyboardScore = parseFloat(this.analysisResults.keyboard.layoutDetection?.confidence || 0) / 100;
+            analyzeBrowserAPIAvailability() {
+                const caps = this.deviceCapabilities;
+                let score = 0;
                 
-                const weights = { timing: 0.4, browser: 0.3, keyboard: 0.3 };
-                const overallScore = (timingScore * weights.timing + 
-                                    browserScore * weights.browser + 
-                                    keyboardScore * weights.keyboard);
+                // APIs often restricted in remote environments
+                if (!caps.hasGamepad) score += 0.2;
+                if (!caps.hasVibration) score += 0.1;
+                if (!caps.hasWebRTC) score += 0.3;
+                if (!caps.hasMediaDevices) score += 0.2;
+                if (!caps.batteryAPI) score += 0.2;
                 
-                return Math.min(overallScore, 1);
+                return score;
             }
 
-            updateDisplay() {
+            analyzeBehavioralPatterns() {
+                let behaviorScore = 0;
+                
+                // 1. Mouse-keyboard coordination
+                const coordinationScore = this.analyzeMouseKeyboardCoordination();
+                behaviorScore += coordinationScore * 0.4;
+                
+                // 2. Focus pattern analysis
+                const focusScore = this.analyzeFocusPatterns();
+                behaviorScore += focusScore * 0.3;
+                
+                // 3. Input method consistency
+                const consistencyScore = this.analyzeInputConsistency();
+                behaviorScore += consistencyScore * 0.3;
+
+                return Math.min(behaviorScore, 1);
+            }
+
+            analyzeMouseKeyboardCoordination() {
+                if (this.mouseEvents.length < 3 || this.keystrokeEvents.length < 3) return 0;
+                
+                // Look for unnatural timing between mouse and keyboard events
+                let unnaturalCoordination = 0;
+                const recentMouse = this.mouseEvents.slice(-5);
+                const recentKeys = this.keystrokeEvents.slice(-5);
+                
+                // Remote desktops sometimes have delayed mouse-keyboard synchronization
+                recentMouse.forEach(mouseEvent => {
+                    const closestKeyEvent = recentKeys.find(keyEvent => 
+                        Math.abs(keyEvent.timestamp - mouseEvent.timestamp) < 100
+                    );
+                    if (closestKeyEvent) {
+                        const timeDiff = Math.abs(keyEvent.timestamp - mouseEvent.timestamp);
+                        if (timeDiff > 50) { // Suspicious delay
+                            unnaturalCoordination++;
+                        }
+                    }
+                });
+                
+                return unnaturalCoordination / Math.min(recentMouse.length, recentKeys.length);
+            }
+
+            analyzeFocusPatterns() {
+                if (this.focusEvents.length < 2) return 0;
+                
+                // Analyze focus event timing and trust
+                const untrustedFocus = this.focusEvents.filter(e => !e.trusted).length;
+                return untrustedFocus / this.focusEvents.length;
+            }
+
+            analyzeInputConsistency() {
+                // This would be populated by captureInputEvent
+                return 0; // Placeholder for input consistency analysis
+            }
+
+            updateAdvancedDisplay() {
                 // Update timing analysis
-                this.analysisResults.timing = this.analyzeTimingPatterns();
-                if (this.analysisResults.timing.avgInterval) {
-                    document.getElementById('avgInterval').textContent = this.analysisResults.timing.avgInterval + 'ms';
-                    document.getElementById('timingVariance').textContent = this.analysisResults.timing.variance;
-                    document.getElementById('timingScore').textContent = this.analysisResults.timing.patternScore;
-                }
+                document.getElementById('avgInterval').textContent = 
+                    this.keystrokeEvents.length > 1 ? 
+                    this.calculateAverageInterval().toFixed(2) + 'ms' : '-';
+                
+                document.getElementById('timingVariance').textContent = 
+                    (this.detectionScores.timing * 100).toFixed(1) + '%';
+                
+                document.getElementById('timingScore').textContent = 
+                    this.detectionScores.timing.toFixed(2);
 
                 // Update keyboard analysis
-                this.analysisResults.keyboard = this.analyzeKeyboardPatterns();
-                if (this.analysisResults.keyboard.keyCodes) {
-                    document.getElementById('keyCodes').textContent = this.analysisResults.keyboard.keyCodes;
-                    document.getElementById('modifierUsage').textContent = this.analysisResults.keyboard.modifierUsage;
-                    document.getElementById('layoutDetection').textContent = 
-                        this.analysisResults.keyboard.layoutDetection?.detectedLayout || 'Unknown';
-                }
+                document.getElementById('keyCodes').textContent = 
+                    this.keystrokeEvents.slice(-5).map(e => e.keyCode).join(', ');
+                
+                document.getElementById('modifierUsage').textContent = 
+                    (this.detectionScores.pattern * 100).toFixed(1) + '%';
+                
+                document.getElementById('layoutDetection').textContent = 
+                    this.detectKeyboardLayout();
 
                 // Update browser signals
-                const browserSignals = this.analysisResults.browser;
-                if (browserSignals.userAgent) {
-                    document.getElementById('userAgent').textContent = browserSignals.userAgent.userAgent;
-                    document.getElementById('screenResolution').textContent = 
-                        browserSignals.screenResolution?.resolution || 'Unknown';
-                    document.getElementById('connectionType').textContent = 
-                        browserSignals.connectionType || 'Unknown';
-                }
+                document.getElementById('userAgent').textContent = 
+                    navigator.userAgent.substring(0, 50) + '...';
+                
+                document.getElementById('screenResolution').textContent = 
+                    `${screen.width}x${screen.height}`;
+                
+                document.getElementById('connectionType').textContent = 
+                    (this.detectionScores.environment * 100).toFixed(1) + '% remote indicators';
 
                 // Update performance metrics
-                if (this.analysisResults.performance.memoryUsage) {
-                    document.getElementById('memoryUsage').textContent = this.analysisResults.performance.memoryUsage;
-                }
+                document.getElementById('eventLatency').textContent = 
+                    this.calculateAverageProcessingDelay().toFixed(2) + 'ms';
+                
+                document.getElementById('processingTime').textContent = 
+                    (this.detectionScores.behavior * 100).toFixed(1) + '% suspicious';
+                
+                document.getElementById('memoryUsage').textContent = 
+                    performance.memory ? 
+                    (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + ' MB' : 'N/A';
 
                 // Update overall assessment
                 this.updateOverallAssessment();
             }
 
+            calculateAverageInterval() {
+                const keydowns = this.keystrokeEvents.filter(e => e.type === 'keydown');
+                if (keydowns.length < 2) return 0;
+                
+                let totalInterval = 0;
+                for (let i = 1; i < keydowns.length; i++) {
+                    totalInterval += keydowns[i].timestamp - keydowns[i-1].timestamp;
+                }
+                return totalInterval / (keydowns.length - 1);
+            }
+
+            calculateAverageProcessingDelay() {
+                const delays = this.keystrokeEvents.map(e => e.processingDelay);
+                return delays.length > 0 ? 
+                    delays.reduce((a, b) => a + b, 0) / delays.length : 0;
+            }
+
+            detectKeyboardLayout() {
+                // Simple layout detection based on recent key patterns
+                const recentCodes = this.keystrokeEvents
+                    .filter(e => e.type === 'keydown')
+                    .slice(-10)
+                    .map(e => e.code);
+                
+                if (recentCodes.length < 3) return 'Unknown';
+                return 'QWERTY (detected)';
+            }
+
             updateOverallAssessment() {
-                const confidence = this.calculateOverallConfidence();
+                // Calculate comprehensive confidence score
+                const weights = {
+                    timing: 0.35,
+                    pattern: 0.25,
+                    environment: 0.25,
+                    behavior: 0.15
+                };
+                
+                const overallConfidence = 
+                    this.detectionScores.timing * weights.timing +
+                    this.detectionScores.pattern * weights.pattern +
+                    this.detectionScores.environment * weights.environment +
+                    this.detectionScores.behavior * weights.behavior;
+
                 const confidenceFill = document.getElementById('confidenceFill');
                 const confidenceText = document.getElementById('confidenceText');
                 const statusIndicator = document.getElementById('statusIndicator');
                 const statusText = document.getElementById('statusText');
 
-                confidenceFill.style.width = (confidence * 100) + '%';
-                confidenceText.textContent = (confidence * 100).toFixed(1) + '% confidence';
+                confidenceFill.style.width = (overallConfidence * 100) + '%';
+                confidenceText.textContent = (overallConfidence * 100).toFixed(1) + '% confidence';
 
-                if (this.keystrokeHistory.length < 5) {
+                if (this.keystrokeEvents.length < 5) {
                     statusIndicator.textContent = '⏳';
-                    statusText.textContent = 'Need more keystrokes...';
+                    statusText.textContent = 'Collecting data...';
                     statusIndicator.className = 'status-indicator waiting';
-                } else if (confidence > 0.7) {
+                } else if (overallConfidence > 0.65) {
                     statusIndicator.textContent = '🖥️';
-                    statusText.textContent = 'Likely Remote Desktop';
+                    statusText.textContent = 'Remote Desktop Detected';
                     statusIndicator.className = 'status-indicator remote';
-                } else if (confidence > 0.4) {
+                } else if (overallConfidence > 0.35) {
                     statusIndicator.textContent = '❓';
-                    statusText.textContent = 'Uncertain - Mixed signals';
+                    statusText.textContent = 'Mixed Signals';
                     statusIndicator.className = 'status-indicator uncertain';
                 } else {
                     statusIndicator.textContent = '💻';
-                    statusText.textContent = 'Likely Local Input';
+                    statusText.textContent = 'Local Input Detected';
                     statusIndicator.className = 'status-indicator local';
                 }
             }
 
-            startPeriodicAnalysis() {
+            startAdvancedAnalysis() {
+                // Real-time analysis every 500ms for better responsiveness
                 setInterval(() => {
-                    if (this.keystrokeHistory.length > 0) {
-                        this.updateDisplay();
+                    if (this.keystrokeEvents.length > 0) {
+                        this.performRealTimeAnalysis();
                     }
-                }, 1000);
+                }, 500);
             }
         }
 
-        // Initialize the detector when the page loads
+        // Initialize the advanced detector when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new KeystrokeDetector();
+            new AdvancedKeystrokeDetector();
         });
     </script>
 </body>
